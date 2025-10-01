@@ -1,86 +1,218 @@
+
+"""
+Módulo para gerenciamento da conexão e operações com o banco de dados MySQL.
+
+Esta classe encapsula a lógica de conexão, execução de queries e
+gerenciamento de transações, além de fornecer métodos para popular
+o banco de dados com dados iniciais de teste.
+
+A classe é implementada como um gerenciador de contexto para garantir
+que a conexão seja fechada de forma segura e automática.
+
+Exemplo de uso:
+    with DatabaseManager() as db:
+        restaurante_id = db.create_restaurant(...)
+"""
+
 import mysql.connector
+from mysql.connector import MySQLConnection, Error
 import sys
+from typing import Optional
 
 class DatabaseManager:
-    def __init__(self):
-        self.connection = None
-        self.cursor = None
+    """
+    Gerencia a conexão e as transações com o banco de dados MySQL.
+    """
+
+    def __init__(self, config_file: str = "my.cnf"):
+        """
+        Inicializa o gerenciador e estabelece a conexão com o banco de dados.
+
+        Args:
+            config_file (str): O caminho para o arquivo de configuração da conexão.
+        """
+        self.connection: Optional[MySQLConnection] = None
         try:
-            self.connection = mysql.connector.connect(option_files="my.cnf")
-            self.cursor = self.connection.cursor()
-            print("arquivo de configuração único")
-            print(f'ID da conexão con: {self.connection.connection_id}')
-        except mysql.connector.Error as e:
-            print(f"Error connecting to MySQL Database: {e}")
+            # A conexão é estabelecida usando um arquivo de configuração externo
+            # para não expor credenciais no código.
+            self.connection = mysql.connector.connect(option_files=config_file)
+            print("✅ Conexão com o banco de dados estabelecida com sucesso.")
+            print(f"   ID da Conexão: {self.connection.connection_id}")
+        except Error as e:
+            print(f"❌ Erro fatal ao conectar com o MySQL: {e}", file=sys.stderr)
+            # Se a conexão falhar, o programa não pode continuar.
             sys.exit(1)
 
-    def populate_clients(self):
+    def __enter__(self):
+        """
+        Método de entrada para o gerenciador de contexto. Retorna a própria instância.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Método de saída do gerenciador de contexto. Garante que a conexão seja fechada.
+        """
+        self.close()
+
+    def close(self):
+        """
+        Fecha a conexão com o banco de dados de forma segura.
+        """
+        if self.connection and self.connection.is_connected():
+            print("\nℹ️ Fechando conexão com o banco de dados...")
+            self.connection.close()
+            print("✅ Conexão fechada.")
+
+    def populate_clients(self) -> None:
+        """
+        Popula a tabela de clientes com um usuário de exemplo.
+        A transação é controlada com commit() em caso de sucesso e rollback() em caso de erro.
+        """
+        print("   -> Populando clientes...")
         try:
+            # Criar um cursor novo para cada operação é a melhor prática.
             with self.connection.cursor() as cursor:
-                cursor.execute("INSERT INTO usuario (usuario, email, senha, is_restaurante) VALUES (%s, %s, %s, FALSE)", ("client1", "client1@email.com", "password1"))
-                usuario_id = cursor.lastrowid
-                cursor.execute("INSERT INTO cliente (usuario_id, nome_completo, email, telefone, cpf) VALUES (%s, %s, %s, %s, %s)", 
-                             (usuario_id, "Client One", "client1@email.com", "123456789", "12345678901"))
+                # 1. Insere na tabela 'usuario'
+                sql_usuario = "INSERT INTO usuario (usuario, email, senha, is_restaurante) VALUES (%s, %s, %s, FALSE)"
+                cursor.execute(sql_usuario, ("client1", "client1@email.com", "password123"))
+                usuario_id = cursor.lastrowid # Maneira correta de obter o último ID inserido
+
+                # 2. Insere na tabela 'cliente' usando o ID do usuário
+                sql_cliente = "INSERT INTO cliente (usuario_id, nome_completo, email, telefone, cpf) VALUES (%s, %s, %s, %s, %s)"
+                cursor.execute(sql_cliente, (usuario_id, "Cliente Exemplo Um", "client1@email.com", "999998888", "12345678901"))
+                
                 self.connection.commit()
-        except mysql.connector.Error as e:
-            print(f"Error populating clients: {e}")
+                print("      Cliente de exemplo inserido com sucesso.")
+        except Error as e:
+            print(f"      ❌ Erro ao popular clientes: {e}")
             self.connection.rollback()
 
-    def populate_restaurants(self):
+    def populate_restaurants(self) -> Optional[int]:
+        """
+        Popula as tabelas de restaurante e endereço com um exemplo.
+
+        Returns:
+            Optional[int]: O ID do restaurante inserido, ou None em caso de falha.
+        """
+        print("   -> Populando restaurantes...")
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute("INSERT INTO usuario (usuario, email, senha, is_restaurante) VALUES (%s, %s, %s, TRUE)", ("rest1", "rest1@email.com", "password1"))
+                # 1. Insere usuário do tipo restaurante
+                sql_usuario = "INSERT INTO usuario (usuario, email, senha, is_restaurante) VALUES (%s, %s, %s, TRUE)"
+                cursor.execute(sql_usuario, ("restaurante_bom", "contato@restaurante.com", "senha123"))
                 usuario_id = cursor.lastrowid
-                cursor.execute("INSERT INTO enderecos_restaurante (rua, num, bairro, cidade, estado, cep) VALUES (%s, %s, %s, %s, %s, %s)", 
-                             ("Rua Exemplo", "123", "Centro", "São Paulo", "SP", "01000-000"))
+
+                # 2. Insere o endereço do restaurante
+                sql_endereco = "INSERT INTO enderecos_restaurante (rua, num, bairro, cidade, estado, cep) VALUES (%s, %s, %s, %s, %s, %s)"
+                cursor.execute(sql_endereco, ("Avenida Principal", "100", "Centro", "Goiânia", "GO", "74000-000"))
                 id_end_rest = cursor.lastrowid
-                cursor.execute("INSERT INTO restaurante (usuario_id, id_end_rest, nome, telefone, tipo_culinaria) VALUES (%s, %s, %s, %s, %s)", 
-                             (usuario_id, id_end_rest, "Restaurant One", "987654321", "Italian"))
+
+                # 3. Insere o restaurante, ligando usuário e endereço
+                sql_restaurante = "INSERT INTO restaurante (usuario_id, id_end_rest, nome, telefone, tipo_culinaria) VALUES (%s, %s, %s, %s, %s)"
+                cursor.execute(sql_restaurante, (usuario_id, id_end_rest, "Sabor da Terra", "62988887777", "Comida Goiana"))
+                restaurante_id = cursor.lastrowid
+                
                 self.connection.commit()
-                cursor.execute("SELECT LAST_INSERT_ID()")
-                return cursor.fetchone()[0]
-        except mysql.connector.Error as e:
-            print(f"Error populating restaurants: {e}")
+                print(f"      Restaurante de exemplo (ID: {restaurante_id}) inserido com sucesso.")
+                return restaurante_id
+        except Error as e:
+            print(f"      ❌ Erro ao popular restaurantes: {e}")
             self.connection.rollback()
             return None
 
-    def populate_schedules(self, rest_id):
+    def populate_schedules(self, rest_id: int) -> None:
+        """
+        Popula a tabela de horários de funcionamento para um restaurante específico.
+
+        Args:
+            rest_id (int): O ID do restaurante para o qual o horário será adicionado.
+        """
+        print(f"   -> Populando horários para o restaurante ID {rest_id}...")
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute("INSERT INTO horarios_funcionamento_restaurante (id_restaurante, dia_semana, horario_abertura, horario_fechamento) VALUES (%s, %s, %s, %s)", 
-                             (rest_id, "Segunda", "09:00:00", "21:00:00"))
+                sql = "INSERT INTO horarios_funcionamento_restaurante (id_restaurante, dia_semana, horario_abertura, horario_fechamento) VALUES (%s, %s, %s, %s)"
+                horarios = [
+                    (rest_id, "Segunda", "11:00:00", "22:00:00"),
+                    (rest_id, "Terça", "11:00:00", "22:00:00"),
+                    (rest_id, "Quarta", "11:00:00", "22:00:00"),
+                ]
+                cursor.executemany(sql, horarios)
                 self.connection.commit()
-        except mysql.connector.Error as e:
-            print(f"Error populating schedules: {e}")
+                print("      Horários de exemplo inseridos com sucesso.")
+        except Error as e:
+            print(f"      ❌ Erro ao popular horários: {e}")
             self.connection.rollback()
 
-    def populate_menu(self, rest_id):
+    def populate_menu(self, rest_id: int) -> None:
+        """
+        Popula o cardápio com uma categoria e um prato de exemplo para um restaurante.
+
+        Args:
+            rest_id (int): O ID do restaurante.
+        """
+        print(f"   -> Populando cardápio para o restaurante ID {rest_id}...")
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute("INSERT INTO categoria_pratos (id_restaurante, nome_categoria) VALUES (%s, 'Pratos Principais')", (rest_id,))
-                cursor.execute("SELECT LAST_INSERT_ID()")
-                categoria_id = cursor.fetchone()[0]
-                cursor.execute("INSERT INTO pratos (categoria_id, nome_prato, descricao, preco) VALUES (%s, 'Pizza Margherita', 'Pizza com queijo e manjericão', 25.50)", (categoria_id,))
+                # 1. Insere a categoria
+                sql_categoria = "INSERT INTO categoria_pratos (id_restaurante, nome_categoria) VALUES (%s, %s)"
+                cursor.execute(sql_categoria, (rest_id, 'Pratos Principais'))
+                categoria_id = cursor.lastrowid
+
+                # 2. Insere um prato nessa categoria
+                sql_prato = "INSERT INTO pratos (categoria_id, nome_prato, descricao, preco) VALUES (%s, %s, %s, %s)"
+                cursor.execute(sql_prato, (categoria_id, 'Pamonha Frita', 'Deliciosa pamonha salgada frita na hora', 15.50))
+                
                 self.connection.commit()
-        except mysql.connector.Error as e:
-            print(f"Error populating menu: {e}")
+                print("      Cardápio de exemplo inserido com sucesso.")
+        except Error as e:
+            print(f"      ❌ Erro ao popular cardápio: {e}")
             self.connection.rollback()
 
-    def close(self):
-        if self.connection and self.connection.is_connected():
-            self.cursor.close()
-            self.connection.close()
+    def populate_payment_methods(self) -> None:
+        """
+        Adiciona as formas de pagamento padrão na tabela `forma_pagamento`.
+        Usa 'INSERT IGNORE' para evitar erros caso os dados já existam,
+        tornando a operação idempotente (pode ser executada várias vezes sem problemas).
+        """
+        print("   -> Populando formas de pagamento...")
+        try:
+            with self.connection.cursor() as cursor:
+                payment_methods = [
+                    ('Dinheiro',), ('Pix',), ('Cartão de Crédito',), ('Cartão de Débito',)
+                ]
+                # 'INSERT IGNORE' é útil para dados estáticos como este
+                query = "INSERT IGNORE INTO forma_pagamento (descricao) VALUES (%s)"
+                cursor.executemany(query, payment_methods)
+                self.connection.commit()
+                print("      Formas de pagamento populadas com sucesso.")
+        except Error as e:
+            print(f"      ❌ Erro ao popular formas de pagamento: {e}")
+            self.connection.rollback()
 
-    def __del__(self):
-        self.close()
 
+def _populate_initial_data(db: DatabaseManager) -> None:
+    """
+    Executa a sequência de funções para popular o banco de dados com dados iniciais.
+
+    Args:
+        db (DatabaseManager): Uma instância do gerenciador de banco de dados.
+    """
+    print("\nIniciando a população do banco de dados com dados de exemplo...")
+    db.populate_payment_methods()
+    db.populate_clients()
+    
+    rest_id = db.populate_restaurants()
+    if rest_id:
+        db.populate_schedules(rest_id)
+        db.populate_menu(rest_id)
+    print("\n✨ População do banco de dados concluída.")
+
+
+# Ponto de entrada do script:
+# Este bloco só será executado quando o arquivo for chamado diretamente.
 if __name__ == "__main__":
-    db = DatabaseManager()
-    try:
-        db.populate_clients()
-        rest_id = db.populate_restaurants()
-        if rest_id:
-            db.populate_schedules(rest_id)
-            db.populate_menu(rest_id)
-    finally:
-        db.close()
+    # A sintaxe 'with' garante que a conexão será criada e, ao final,
+    # o método close() será chamado automaticamente.
+    with DatabaseManager() as db_manager:
+        _populate_initial_data(db_manager)

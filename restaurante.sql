@@ -110,24 +110,28 @@ CREATE TABLE IF NOT EXISTS pratos (
     FOREIGN KEY (categoria_id) REFERENCES categoria_pratos(categoria_id) ON DELETE CASCADE
 );
 
+-- tabela forma_pagamento
+CREATE TABLE IF NOT EXISTS forma_pagamento (
+    id_forma_pagamento INT AUTO_INCREMENT,
+    descricao VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_forma_pagamento)
+);
+
 -- tabela pedido
 CREATE TABLE IF NOT EXISTS pedido (
     id_pedido INT AUTO_INCREMENT,
     id_cliente INT NOT NULL,
     id_restaurante INT NOT NULL,
+    id_forma_pagamento INT NOT NULL,
+    endereco_id INT NOT NULL,        -- A coluna que faltava
     dataHora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status_pedido ENUM('Pendente', 'Em Preparação', 'Em Trânsito', 'Entregue', 'Cancelado') DEFAULT ('Pendente'),
+    status_pedido ENUM('Pendente', 'Em Preparação', 'Em Trânsito', 'Entregue', 'Cancelado') DEFAULT 'Pendente',
     valor_total DECIMAL(10, 2) NOT NULL,
     PRIMARY KEY (id_pedido),
     FOREIGN KEY (id_cliente) REFERENCES cliente(cliente_id) ON DELETE CASCADE,
-    FOREIGN KEY (id_restaurante) REFERENCES restaurante(id_restaurante) ON DELETE CASCADE
-);
-
--- tabela forma_pagamento
-CREATE TABLE IF NOT EXISTS forma_pagamento (
-    id_forma_pagamento INT AUTO_INCREMENT,
-    formaPag ENUM('Cartão', 'Pix', 'Dinheiro') NOT NULL,
-    PRIMARY KEY (id_forma_pagamento)
+    FOREIGN KEY (id_restaurante) REFERENCES restaurante(id_restaurante) ON DELETE CASCADE,
+    FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento(id_forma_pagamento),
+    FOREIGN KEY (endereco_id) REFERENCES enderecos_entrega(endereco_id) ON DELETE RESTRICT -- A chave estrangeira que faltava
 );
 
 -- tabela item_pedido
@@ -147,47 +151,8 @@ CREATE TABLE IF NOT EXISTS produtos(
 	produto_id INT AUTO_INCREMENT,
     estoque INT NOT NULL CHECK (estoque >= 0),
     nome_produto VARCHAR(64),
-    PRIMARY KEY(produto_id));
-
--- tabela possui3 (relacao pratos x produtos)
-CREATE TABLE IF NOT EXISTS possui3(
-	id_prato INT NOT NULL,
-    produto_id INT NOT NULL,
-    qtd INT NOT NULL CHECK (qtd > 0),
-    PRIMARY KEY(id_prato, produto_id),
-	FOREIGN KEY (id_prato) REFERENCES pratos(id_prato) ON DELETE CASCADE,
-    FOREIGN KEY (produto_id) REFERENCES produtos(produto_id) ON DELETE CASCADE
-    );
-
-
--- trigger para atualizar estoque ao inserir item no pedido
-CREATE TRIGGER trg_baixa_estoque
-AFTER INSERT ON item_pedido
-FOR EACH ROW
-BEGIN
-    UPDATE produtos p
-    JOIN possui3 ps ON ps.produto_id = p.produto_id
-    SET p.estoque = p.estoque - (ps.qtd * NEW.qtd)
-    WHERE ps.id_prato = NEW.id_prato;
-END;
-
--- evita que o estoque fique negativo
-CREATE TRIGGER trg_verifica_estoque
-BEFORE INSERT ON item_pedido
-FOR EACH ROW
-BEGIN
-    DECLARE qtd_disponivel INT;
-    SELECT MIN(p.estoque DIV ps.qtd)
-    INTO qtd_disponivel
-    FROM produtos p
-    JOIN possui3 ps ON ps.produto_id = p.produto_id
-    WHERE ps.id_prato = NEW.id_prato;
-    
-    IF NEW.qtd > qtd_disponivel THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Estoque insuficiente para este prato';
-    END IF;
-END;
+    PRIMARY KEY(produto_id)
+);
 
 -- atualiza valor total automaticamente ao inserir item no pedido
 CREATE TRIGGER trg_valor_total
@@ -254,3 +219,8 @@ BEGIN
     INSERT INTO avaliacoes_restaurante(id_restaurante, id_cliente, nota, feedback)
     VALUES (p_restaurante_id, p_cliente_id, p_nota, p_feedback);
 END;
+
+# Alterações futuras: adicionar taxa de entrega e tempo estimado de entrega na tabela restaurante
+ALTER TABLE restaurante 
+ADD COLUMN taxa_entrega DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+ADD COLUMN tempo_entrega_estimado VARCHAR(50);

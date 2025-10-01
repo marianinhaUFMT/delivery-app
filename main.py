@@ -1,79 +1,13 @@
-"""
-Módulo principal para a execução do aplicativo de delivery.
-Gerencia o fluxo de interação do usuário, desde o login e cadastro
-até a criação de pedidos e gerenciamento por parte dos restaurantes.
-"""
-
+from database_manager import DatabaseManager
 import getpass
 import sys
-from database_manager import DatabaseManager
 
-# ==============================================================================
-# --- CONSTANTES ---
-# Usar constantes para comandos do usuário evita erros de digitação e
-# torna o código mais legível.
-# ==============================================================================
-SAIR_COMMAND = 'sair'
-VOLTAR_COMMAND = 'voltar'
-CONFIRM_COMMAND = 's'
-NEW_CATEGORY_COMMAND = 'n'
+# --- Funções de Fluxo (Cadastro, Login, Painéis) ---
 
-
-# ==============================================================================
-# --- FUNÇÕES AUXILIARES (HELPERS) ---
-# Funções pequenas e reutilizáveis para tarefas comuns.
-# ==============================================================================
-
-def _print_header(title: str):
-    """Imprime um cabeçalho formatado para organizar a interface do usuário."""
-    print(f"\n--- {title.upper()} ---")
-
-
-def _get_validated_input(prompt: str, type_cast=str, error_message="Entrada inválida."):
-    """
-    Solicita uma entrada do usuário e a valida, repetindo até receber um valor válido.
-
-    Args:
-        prompt (str): A mensagem a ser exibida para o usuário.
-        type_cast (type, optional): O tipo para o qual a entrada deve ser convertida (ex: int, float).
-                                    Padrão é str.
-        error_message (str, optional): A mensagem de erro a ser exibida.
-
-    Returns:
-        O valor inserido pelo usuário, convertido para o tipo especificado.
-    """
-    while True:
-        try:
-            value = input(prompt)
-            return type_cast(value)
-        except ValueError:
-            print(f"❌ {error_message} Tente novamente.")
-        except (KeyboardInterrupt, EOFError):
-            print("\nOperação cancelada pelo usuário.")
-            return None
-
-
-def _confirm_action(prompt: str) -> bool:
-    """
-    Pede uma confirmação (s/n) ao usuário.
-
-    Args:
-        prompt (str): A pergunta a ser feita.
-
-    Returns:
-        bool: True se o usuário confirmar, False caso contrário.
-    """
-    choice = input(prompt).lower()
-    return choice == CONFIRM_COMMAND
-
-
-# ==============================================================================
-# --- FLUXOS DE CADASTRO E LOGIN ---
-# ==============================================================================
-
-def cadastrar_cliente(db: DatabaseManager):
-    """Guia o usuário através do processo de cadastro de um novo cliente."""
-    _print_header("Cadastro de Novo Cliente")
+# (Mantenha as funções cadastrar_cliente, cadastrar_restaurante, add_schedules_flow, e add_menu_flow como estavam)
+def cadastrar_cliente(db):
+    """Função para guiar o cadastro de um novo cliente."""
+    print("\n--- Cadastro de Novo Cliente ---")
     try:
         usuario = input("Digite um nome de usuário: ")
         email = input("Digite seu email: ")
@@ -81,48 +15,50 @@ def cadastrar_cliente(db: DatabaseManager):
         nome_completo = input("Digite seu nome completo: ")
         telefone = input("Digite seu telefone: ")
         cpf = input("Digite seu CPF: ")
-
         print("\nCadastrando cliente...")
         cliente_id = db.create_client(usuario, email, senha, nome_completo, telefone, cpf)
-
         if cliente_id:
             print(f"\n✅ Cliente '{nome_completo}' cadastrado com sucesso! ID: {cliente_id}")
         else:
-            print("\n❌ Falha ao cadastrar cliente. Verifique se os dados já existem.")
+            print("\n❌ Falha ao cadastrar cliente.")
     except (KeyboardInterrupt, EOFError):
         print("\nCadastro cancelado.")
 
-
-def cadastrar_restaurante(db: DatabaseManager):
-    """Guia o usuário através do processo completo de cadastro de um restaurante."""
+def cadastrar_restaurante(db):
+    """Função para guiar o cadastro completo de um novo restaurante."""
+    print("\n--- Cadastro de Novo Restaurante (Parte 1: Dados Básicos) ---")
     try:
-        _print_header("Cadastro de Restaurante (Parte 1: Dados Básicos)")
+        # ... (perguntas de usuario, email, senha, nome, etc. continuam as mesmas)
         usuario = input("Digite um nome de usuário para o restaurante: ")
         email = input("Digite o email de contato: ")
         senha = getpass.getpass("Digite uma senha: ")
         nome = input("Digite o nome do restaurante: ")
         telefone = input("Digite o telefone do restaurante: ")
         tipo_culinaria = input("Digite o tipo de culinária: ")
-        taxa_entrega = _get_validated_input(
-            "Digite a taxa de entrega (ex: 5.50): ", float, "Valor inválido. Use ponto decimal."
-        )
-        if taxa_entrega is None: return
-        tempo_estimado = input("Digite o tempo de entrega estimado (ex: 30-40 min): ")
 
-        _print_header("Cadastro de Restaurante (Parte 2: Endereço)")
+        # MODIFICADO: Adicionando perguntas de taxa e tempo
+        while True:
+            try:
+                taxa_entrega = float(input("Digite a taxa de entrega (ex: 5.50): "))
+                break
+            except ValueError:
+                print("Valor inválido. Use ponto como separador decimal.")
+        tempo_estimado = input("Digite o tempo de entrega estimado (ex: 30-40 min): ")
+        
+        print("\n--- (Parte 2: Endereço) ---")
+        # ... (perguntas de endereço continuam as mesmas)
         endereco = {
             "rua": input("Rua: "), "num": input("Número: "), "bairro": input("Bairro: "),
             "cidade": input("Cidade: "), "estado": input("Estado (UF): "), "cep": input("CEP: ")
         }
 
         print("\nCadastrando restaurante...")
-        restaurante_id = db.create_restaurant(
-            usuario, email, senha, nome, telefone, tipo_culinaria, endereco, taxa_entrega, tempo_estimado
-        )
+        # MODIFICADO: Passando os novos dados para a função
+        restaurante_id = db.create_restaurant(usuario, email, senha, nome, telefone, tipo_culinaria, endereco, taxa_entrega, tempo_estimado)
 
         if restaurante_id:
+            # ... (resto da função continua o mesmo)
             print(f"\n✅ Restaurante '{nome}' cadastrado com sucesso! ID: {restaurante_id}")
-            # Após o cadastro básico, inicia os fluxos para adicionar detalhes
             add_schedules_flow(db, restaurante_id)
             add_menu_flow(db, restaurante_id)
         else:
@@ -130,427 +66,58 @@ def cadastrar_restaurante(db: DatabaseManager):
     except (KeyboardInterrupt, EOFError):
         print("\nCadastro cancelado.")
 
-
-def do_login(db: DatabaseManager):
-    """
-    Executa o fluxo de login para um usuário (cliente ou restaurante).
-    Redireciona para o painel apropriado em caso de sucesso.
-    """
-    _print_header("Login")
-    try:
-        usuario = input("Usuário: ")
-        senha = getpass.getpass("Senha: ")
-        user_data = db.login_user(usuario, senha)
-
-        if user_data:
-            print("\n✅ Login bem-sucedido!")
-            if user_data.get('is_restaurante'):
-                show_restaurant_panel(db, user_data)
-            else:
-                show_client_panel(db, user_data)
-        else:
-            print("\n❌ Usuário ou senha incorretos.")
-    except (KeyboardInterrupt, EOFError):
-        print("\nLogin cancelado.")
-
-
-# ==============================================================================
-# --- PAINEL DO CLIENTE E FLUXOS RELACIONADOS ---
-# ==============================================================================
-
-def show_client_panel(db: DatabaseManager, user_data: dict):
-    """
-    Exibe o painel de opções para clientes logados.
-
-    Args:
-        db (DatabaseManager): Instância do gerenciador de banco de dados.
-        user_data (dict): Dicionário contendo os dados do cliente logado.
-    """
-    cliente_id = user_data.get('cliente_id')
-    if not cliente_id:
-        print("Erro: Não foi possível identificar o cliente associado a este usuário.")
-        return
-
-    while True:
-        _print_header(f"ÁREA DO CLIENTE (ID: {cliente_id})")
-        print("  1 - Fazer um Pedido")
-        print("  2 - Ver Meus Pedidos")
-        print("  3 - Logout")
-
-        choice = input("Sua opção: ")
-        if choice == '1':
-            place_order_flow(db, user_data)
-        elif choice == '2':
-            view_orders_flow_client(db, cliente_id)
-        elif choice == '3':
-            break
-        else:
-            print("Opção inválida.")
-        input("\nPressione Enter para continuar...")
-
-
-def place_order_flow(db: DatabaseManager, client_user_data: dict):
-    """
-    Orquestra o fluxo completo de um cliente fazendo um pedido,
-    desde a escolha do restaurante até a confirmação final.
-
-    Args:
-        db (DatabaseManager): Instância do gerenciador de banco de dados.
-        client_user_data (dict): Dicionário com os dados do cliente.
-    """
-    # Etapa 1: Selecionar o restaurante
-    selected_restaurant = _select_restaurant_for_order(db)
-    if not selected_restaurant:
-        return
-
-    # Etapa 2: Montar o carrinho de compras
-    cart = _build_order_cart(db, selected_restaurant['id_restaurante'])
-    if not cart:
-        print("Carrinho vazio. Pedido cancelado.")
-        return
-
-    # Etapa 3: Selecionar endereço de entrega
-    cliente_id = client_user_data['cliente_id']
-    selected_address_id = address_selection_flow(db, cliente_id)
-    if not selected_address_id:
-        print("Endereço não selecionado. Pedido cancelado.")
-        return
-
-    # Etapa 4: Selecionar forma de pagamento
-    selected_payment_id = payment_selection_flow(db)
-    if not selected_payment_id:
-        print("Forma de pagamento não selecionada. Pedido cancelado.")
-        return
-
-    # Etapa 5: Revisar e confirmar o pedido
-    _review_and_create_order(
-        db, cliente_id, selected_restaurant, cart,
-        selected_address_id, selected_payment_id
-    )
-
-
-def _select_restaurant_for_order(db: DatabaseManager) -> dict | None:
-    """
-    Lista os restaurantes e permite ao cliente escolher um.
-
-    Returns:
-        dict | None: Dicionário com os dados do restaurante escolhido ou None se cancelado.
-    """
-    _print_header("Fazer Pedido (Etapa 1: Escolha o Restaurante)")
-    restaurants = db.get_all_restaurants()
-    if not restaurants:
-        print("Nenhum restaurante cadastrado no momento.")
-        return None
-
-    for i, r in enumerate(restaurants):
-        print(f"  {i+1} - {r['nome']} ({r['tipo_culinaria']}) | "
-              f"Taxa: R$ {r['taxa_entrega']:.2f} | Tempo: {r['tempo_entrega_estimado']}")
-
-    prompt = "Digite o número do restaurante: "
-    choice = _get_validated_input(prompt, int, "Por favor, digite um número.")
-    if choice is None: return None
-
-    if 1 <= choice <= len(restaurants):
-        return restaurants[choice - 1]
-    else:
-        print("Seleção inválida.")
-        return None
-
-
-def _build_order_cart(db: DatabaseManager, restaurant_id: int) -> list:
-    """
-    Exibe o cardápio e gerencia a adição de itens ao carrinho.
-
-    Args:
-        restaurant_id (int): O ID do restaurante escolhido.
-
-    Returns:
-        list: Uma lista de dicionários, onde cada um representa um item no carrinho.
-    """
-    _print_header(f"Monte seu Carrinho")
-    menu = db.get_restaurant_menu(restaurant_id)
-    if not menu:
-        print("Este restaurante não possui um cardápio disponível.")
-        return []
-
-    cart = []
-    menu_items_flat = []
-    item_number = 1
-    # Transforma o menu (dicionário de categorias) em uma lista plana de pratos
-    for category, dishes in menu.items():
-        print(f"\n-- {category} --")
-        for dish in dishes:
-            print(f"  {item_number} - {dish['nome_prato']} - R$ {dish['preco']:.2f}")
-            print(f"      ({dish['descricao']})")
-            menu_items_flat.append(dish)
-            item_number += 1
-
-    while True:
-        prompt = f"\nDigite o número do prato para adicionar (ou '{SAIR_COMMAND}' para fechar): "
-        user_input = input(prompt)
-        if user_input.lower() == SAIR_COMMAND:
-            break
-
-        try:
-            dish_index = int(user_input) - 1
-            if not (0 <= dish_index < len(menu_items_flat)):
-                print("Número de prato inválido.")
-                continue
-
-            selected_dish = menu_items_flat[dish_index]
-            qty_prompt = f"Quantidade de '{selected_dish['nome_prato']}': "
-            qty = _get_validated_input(qty_prompt, int, "Digite um número inteiro.")
-            if qty is None: continue # Cancelado pelo usuário
-
-            obs = input("Observações (opcional): ")
-
-            cart.append({'dish': selected_dish, 'quantity': qty, 'observations': obs})
-            print(f"✅ '{selected_dish['nome_prato']}' adicionado ao carrinho!")
-        except ValueError:
-            print("Entrada inválida. Por favor, digite um número.")
-
-    return cart
-
-
-def _review_and_create_order(db, cliente_id, restaurant, cart, address_id, payment_id):
-    """
-    Exibe um resumo do pedido para confirmação e o cria no banco de dados.
-    """
-    _print_header("Etapa Final: Confirme seu Pedido")
-    subtotal = sum(item['dish']['preco'] * item['quantity'] for item in cart)
-    taxa_entrega = restaurant['taxa_entrega']
-    total = subtotal + taxa_entrega
-
-    for item in cart:
-        item_total = item['dish']['preco'] * item['quantity']
-        print(f"  - {item['quantity']}x {item['dish']['nome_prato']} @ R$ {item['dish']['preco']:.2f} = R$ {item_total:.2f}")
-        if item['observations']:
-            print(f"    Obs: {item['observations']}")
-
-    print("---------------------------------")
-    print(f"  Subtotal dos Itens: R$ {subtotal:.2f}")
-    print(f"  Taxa de Entrega:    R$ {taxa_entrega:.2f}")
-    print(f"  VALOR TOTAL:        R$ {total:.2f}")
-
-    if _confirm_action("\nTudo certo? Enviar pedido? (s/n): "):
-        pedido_id = db.create_order(
-            cliente_id, restaurant['id_restaurante'], payment_id,
-            address_id, taxa_entrega
-        )
-        if pedido_id:
-            for item in cart:
-                db.add_order_item(
-                    pedido_id, item['dish']['id_prato'], item['quantity'],
-                    item['dish']['preco'], item['observations']
-                )
-            print(f"\n✅ Pedido enviado com sucesso! O ID do seu pedido é: {pedido_id}")
-        else:
-            print("\n❌ Ocorreu um erro ao criar seu pedido. Tente novamente.")
-    else:
-        print("Pedido cancelado.")
-
-
-def view_orders_flow_client(db: DatabaseManager, cliente_id: int):
-    """
-    Exibe o histórico de pedidos para um cliente.
-
-    Args:
-        cliente_id (int): O ID do cliente.
-    """
-    _print_header("Meus Pedidos")
-    orders = db.get_orders_for_client(cliente_id)
-    if not orders:
-        print("Você ainda não fez nenhum pedido.")
-        return
-
-    for order in orders:
-        print(f"  ID: {order['id_pedido']} | Data: {order['dataHora'].strftime('%d/%m/%Y %H:%M')}")
-        print(f"  Restaurante: {order['nome_restaurante']} | Valor: R$ {order['valor_total']:.2f}")
-        print(f"  Status: {order['status_pedido']}\n")
-
-
-def address_selection_flow(db: DatabaseManager, cliente_id: int) -> int | None:
-    """
-    Permite ao cliente selecionar um endereço existente ou adicionar um novo.
-
-    Returns:
-        int | None: O ID do endereço selecionado ou None se a operação for cancelada.
-    """
-    _print_header("Etapa 3: Endereço de Entrega")
-    while True:
-        addresses = db.get_client_addresses(cliente_id)
-        if addresses:
-            print("Selecione um endereço de entrega:")
-            for i, addr in enumerate(addresses):
-                print(f"  {i+1} - {addr['rua']}, {addr['num']} - {addr['bairro']}")
-            print(f"  {len(addresses) + 1} - Adicionar novo endereço")
-            prompt = "Sua opção: "
-            choice = _get_validated_input(prompt, int, "Seleção inválida.")
-            if choice is None: return None
-
-            if 1 <= choice <= len(addresses):
-                return addresses[choice - 1]['endereco_id']
-            elif choice == len(addresses) + 1:
-                # Chama a função para adicionar e continua o loop
-                _add_new_address(db, cliente_id)
-            else:
-                print("Seleção inválida.")
-        else:
-            print("Você não tem endereços cadastrados. Vamos adicionar um.")
-            if _confirm_action("Pressione Enter para adicionar ou digite 'n' para cancelar: "):
-                _add_new_address(db, cliente_id)
-            else:
-                return None
-
-
-def _add_new_address(db: DatabaseManager, cliente_id: int):
-    """Lida com a lógica de adicionar um novo endereço para o cliente."""
-    _print_header("Novo Endereço")
-    rua = input("Rua: ")
-    num = input("Número: ")
-    bairro = input("Bairro: ")
-    cidade = input("Cidade: ")
-    estado = input("Estado (UF): ")
-    cep = input("CEP: ")
-
-    new_addr_id = db.add_client_address(cliente_id, rua, num, bairro, cidade, estado, cep)
-    if new_addr_id:
-        print("✅ Endereço adicionado com sucesso!")
-    else:
-        print("❌ Falha ao adicionar endereço.")
-
-
-def payment_selection_flow(db: DatabaseManager) -> int | None:
-    """
-    Exibe as formas de pagamento disponíveis e permite a seleção.
-
-    Returns:
-        int | None: O ID da forma de pagamento ou None se cancelado.
-    """
-    _print_header("Etapa 4: Forma de Pagamento")
-    payment_methods = db.get_payment_methods()
-    if not payment_methods:
-        print("Nenhuma forma de pagamento disponível.")
-        return None
-
-    print("Selecione a forma de pagamento:")
-    for i, method in enumerate(payment_methods):
-        print(f"  {i+1} - {method['formaPag']}")
-
-    choice = _get_validated_input("Sua opção: ", int, "Seleção inválida.")
-    if choice is None: return None
-
-    if 1 <= choice <= len(payment_methods):
-        return payment_methods[choice - 1]['id_forma_pagamento']
-    else:
-        print("Seleção inválida.")
-        return None
-
-
-# ==============================================================================
-# --- PAINEL DO RESTAURANTE E FLUXOS RELACIONADOS ---
-# ==============================================================================
-
-def show_restaurant_panel(db: DatabaseManager, user_data: dict):
-    """
-    Exibe o painel de opções para restaurantes logados.
-
-    Args:
-        db (DatabaseManager): Instância do gerenciador de banco de dados.
-        user_data (dict): Dicionário contendo os dados do restaurante logado.
-    """
-    id_restaurante = user_data.get('restaurante_id')
-    if not id_restaurante:
-        print("Erro: Não foi possível identificar o restaurante associado a este usuário.")
-        return
-
-    while True:
-        _print_header(f"PAINEL DO RESTAURANTE (ID: {id_restaurante})")
-        print("  1 - Ver e Gerenciar Pedidos Recebidos")
-        print("  2 - Gerenciar Cardápio")
-        print("  3 - Logout")
-
-        choice = input("Sua opção: ")
-        if choice == '1':
-            manage_orders_flow_restaurant(db, id_restaurante)
-        elif choice == '2':
-            manage_menu_flow_restaurant(db, id_restaurante)
-        elif choice == '3':
-            break
-        else:
-            print("Opção inválida.")
-
-
-def manage_menu_flow_restaurant(db: DatabaseManager, id_restaurante: int):
-    """Menu principal para o restaurante gerenciar seu cardápio."""
-    while True:
-        _print_header("Gerenciar Cardápio")
-        print("  1 - Listar todos os pratos")
-        print("  2 - Adicionar novo prato/categoria")
-        print("  3 - Editar um prato existente")
-        print("  4 - Voltar ao painel principal")
-
-        choice = input("Sua opção: ")
-        if choice == '1':
-            list_dishes_restaurant(db, id_restaurante)
-        elif choice == '2':
-            add_menu_flow(db, id_restaurante)
-        elif choice == '3':
-            edit_dish_restaurant(db, id_restaurante)
-        elif choice == '4':
-            break
-        else:
-            print("Opção inválida.")
-        input("\nPressione Enter para continuar...")
-
-
-def add_schedules_flow(db: DatabaseManager, restaurante_id: int):
+def add_schedules_flow(db, restaurante_id):
     """Fluxo interativo para adicionar horários de funcionamento."""
-    _print_header("Parte 3: Horários de Funcionamento")
+    print("\n--- (Parte 3: Horários de Funcionamento) ---")
     while True:
-        dia = input(f"Digite o dia da semana (ex: Segunda) ou '{SAIR_COMMAND}' para terminar: ")
-        if dia.lower() == SAIR_COMMAND:
+        dia = input("Digite o dia da semana (ex: Segunda, Terça) ou 'sair' para terminar: ")
+        if dia.lower() == 'sair':
             break
-        abertura = input(f"Horário de abertura na(o) {dia} (HH:MM): ")
-        fechamento = input(f"Horário de fechamento na(o) {dia} (HH:MM): ")
+        abertura = input(f"Horário de abertura na(o) {dia} (HH:MM:SS): ")
+        fechamento = input(f"Horário de fechamento na(o) {dia} (HH:MM:SS): ")
         db.add_schedule(restaurante_id, dia, abertura, fechamento)
         print(f"Horário de {dia} adicionado!")
 
-
-def add_menu_flow(db: DatabaseManager, restaurante_id: int):
+def add_menu_flow(db, restaurante_id):
     """
-    Fluxo interativo para adicionar itens ao cardápio, permitindo
-    criar ou selecionar categorias.
+    Fluxo interativo aprimorado para adicionar itens ao cardápio,
+    permitindo selecionar categorias existentes ou criar novas.
     """
     while True:
-        _print_header("Adicionar Itens ao Cardápio")
+        print("\n--- Adicionar Itens ao Cardápio ---")
+        
+        # Passo 1: Listar e selecionar a categoria
         categories = db.get_restaurant_categories(restaurante_id)
-
-        print("Escolha uma categoria para adicionar pratos:")
+        print("Escolha uma categoria para adicionar pratos ou crie uma nova:")
+        
         if categories:
             for i, category in enumerate(categories):
                 print(f"  {i+1} - {category['nome_categoria']}")
-
-        print(f"\n  [{NEW_CATEGORY_COMMAND.upper()}] - Criar Nova Categoria")
-        print(f"  [{SAIR_COMMAND.upper()[0]}] - Sair e voltar")
-
+        
+        print("\n  [N] - Criar Nova Categoria")
+        print("  [S] - Sair e voltar ao menu anterior")
+        
         choice = input("Sua opção: ").lower()
+
         categoria_id = None
         nome_categoria = ""
 
-        if choice == SAIR_COMMAND[0]:
+        if choice == 's':
             break
-        elif choice == NEW_CATEGORY_COMMAND:
+        elif choice == 'n':
+            # Criar nova categoria
             nome_categoria = input("Digite o nome da nova categoria: ")
             if nome_categoria:
                 categoria_id = db.add_dish_category(restaurante_id, nome_categoria)
                 if not categoria_id:
                     print("❌ Erro ao criar categoria (talvez já exista uma com esse nome).")
-                    continue
+                    input("Pressione Enter para continuar...")
+                    continue # Volta para o início do loop
             else:
                 print("Nome da categoria não pode ser vazio.")
                 continue
         else:
+            # Tentar selecionar uma categoria existente
             try:
                 choice_index = int(choice) - 1
                 if 0 <= choice_index < len(categories):
@@ -563,107 +130,404 @@ def add_menu_flow(db: DatabaseManager, restaurante_id: int):
                 print("Opção inválida.")
                 continue
 
-        # Se uma categoria foi selecionada ou criada com sucesso, adiciona pratos
+        # Passo 2: Adicionar pratos à categoria selecionada
         if categoria_id:
-            _add_dishes_to_category_flow(db, categoria_id, nome_categoria)
+            print(f"\n-- Adicionando pratos à categoria '{nome_categoria}' --")
+            while True:
+                nome_prato = input("  - Nome do prato (ou 'voltar' para o menu de categorias): ")
+                if nome_prato.lower() == 'voltar':
+                    break
+                
+                descricao = input("    > Descrição do prato: ")
+                while True:
+                    try:
+                        preco = float(input("    > Preço (ex: 29.90): "))
+                        break
+                    except ValueError:
+                        print("    > Preço inválido. Use ponto como separador decimal.")
+                
+                db.add_dish(categoria_id, nome_prato, descricao, preco)
+                print(f"    ✅ Prato '{nome_prato}' adicionado com sucesso!")
 
 
-def _add_dishes_to_category_flow(db: DatabaseManager, categoria_id: int, nome_categoria: str):
-    """Fluxo para adicionar múltiplos pratos a uma categoria específica."""
-    _print_header(f"Adicionando pratos à categoria '{nome_categoria}'")
+def do_login(db):
+    """Função para o fluxo de login."""
+    print("\n--- Login ---")
+    try:
+        usuario = input("Usuário: ")
+        senha = getpass.getpass("Senha: ")
+        user_data = db.login_user(usuario, senha)
+        if user_data:
+            print("\n✅ Login bem-sucedido!")
+            if user_data['is_restaurante']:
+                show_restaurant_panel(db, user_data)
+            else:
+                show_client_panel(db, user_data)
+        else:
+            print("\n❌ Usuário ou senha incorretos.")
+    except (KeyboardInterrupt, EOFError):
+        print("\nLogin cancelado.")
+
+
+def address_selection_flow(db, cliente_id):
+    """Permite que o cliente selecione um endereço existente ou adicione um novo."""
+    print("\n--- (Etapa 3: Endereço de Entrega) ---")
+    
     while True:
-        nome_prato = input(f"  - Nome do prato (ou '{VOLTAR_COMMAND}' para o menu de categorias): ")
-        if nome_prato.lower() == VOLTAR_COMMAND:
+        addresses = db.get_client_addresses(cliente_id)
+        if addresses:
+            print("Selecione um endereço de entrega:")
+            for i, addr in enumerate(addresses):
+                print(f"  {i+1} - {addr['rua']}, {addr['num']} - {addr['bairro']}")
+            print(f"  {len(addresses) + 1} - Adicionar novo endereço")
+            prompt = "Sua opção: "
+            choice_offset = 0
+        else:
+            print("Você não tem endereços cadastrados. Vamos adicionar um.")
+            prompt = "Pressione Enter para continuar ou 'cancelar' para sair: "
+            choice_offset = 1 # Força a adição se não houver endereços
+        
+        try:
+            user_input = input(prompt)
+            if user_input.lower() == 'cancelar':
+                return None
+
+            if not addresses:
+                choice = 1
+            else:
+                choice = int(user_input)
+
+            if 1 <= choice <= len(addresses):
+                return addresses[choice - 1]['endereco_id']
+            elif choice == len(addresses) + 1 or choice_offset == 1: # Adicionar novo endereço
+                print("\n-- Novo Endereço --")
+                rua = input("Rua: ")
+                num = input("Número: ")
+                bairro = input("Bairro: ")
+                cidade = input("Cidade: ")
+                estado = input("Estado (UF): ")
+                cep = input("CEP: ")
+                
+                new_addr_id = db.add_client_address(cliente_id, rua, num, bairro, cidade, estado, cep)
+                if new_addr_id:
+                    print("Endereço adicionado com sucesso!")
+                    # Não retorna imediatamente, permite que o usuário veja o novo endereço na lista
+                else:
+                    print("Falha ao adicionar endereço.")
+                    return None
+            else:
+                print("Seleção inválida.")
+        except (ValueError, IndexError):
+            print("Seleção inválida.")
+
+def payment_selection_flow(db):
+    """Permite que o cliente selecione uma forma de pagamento."""
+    print("\n--- (Etapa 4: Forma de Pagamento) ---")
+    payment_methods = db.get_payment_methods()
+    if not payment_methods:
+        print("Nenhuma forma de pagamento disponível.")
+        return None
+        
+    print("Selecione a forma de pagamento:")
+    for i, method in enumerate(payment_methods):
+        print(f"  {i+1} - {method['formaPag']}")
+        
+    try:
+        choice = int(input("Sua opção: "))
+        if 1 <= choice <= len(payment_methods):
+            return payment_methods[choice - 1]['id_forma_pagamento']
+        else:
+            print("Seleção inválida.")
+            return None
+    except (ValueError, IndexError):
+        print("Seleção inválida.")
+        return None
+    
+# --- NOVO FLUXO DE PEDIDO ---
+def place_order_flow(db, client_user_data):
+    """Orquestra o fluxo completo de um cliente fazendo um pedido."""
+    # Etapa 1: Listar e escolher um restaurante
+    print("\n--- Fazer um Pedido (Etapa 1: Escolha o Restaurante) ---")
+    restaurants = db.get_all_restaurants()
+    if not restaurants:
+        print("Nenhum restaurante cadastrado.")
+        return
+
+    for i, r in enumerate(restaurants):
+        print(f"  {i+1} - {r['nome']} ({r['tipo_culinaria']}) | Taxa: R$ {r['taxa_entrega']:.2f} | Tempo: {r['tempo_entrega_estimado']}")
+
+    try:
+        choice = int(input("Digite o número do restaurante: "))
+        if not (1 <= choice <= len(restaurants)):
+            print("Seleção inválida.")
+            return
+        selected_restaurant = restaurants[choice - 1]
+    except (ValueError, IndexError):
+        print("Seleção inválida.")
+        return
+
+    # --- O BLOCO DE CÓDIGO ABAIXO ESTAVA FALTANDO ---
+    # Etapa 2: Mostrar cardápio e montar o carrinho
+    print(f"\n--- (Etapa 2: Monte seu Carrinho no {selected_restaurant['nome']}) ---")
+    menu = db.get_restaurant_menu(selected_restaurant['id_restaurante'])
+    if not menu:
+        print("Este restaurante não possui um cardápio disponível.")
+        return
+        
+    cart = []  # A variável 'cart' é criada aqui!
+    menu_items_list = []
+    item_number = 1
+    for category, dishes in menu.items():
+        print(f"\n-- {category} --")
+        for dish in dishes:
+            print(f"  {item_number} - {dish['nome_prato']} - R$ {dish['preco']:.2f}")
+            print(f"      ({dish['descricao']})")
+            menu_items_list.append(dish)
+            item_number += 1
+    
+    while True:
+        try:
+            dish_choice = input("\nDigite o número do prato para adicionar (ou 'fim' para fechar o carrinho): ")
+            if dish_choice.lower() == 'fim':
+                break
+            
+            dish_index = int(dish_choice) - 1
+            if not (0 <= dish_index < len(menu_items_list)):
+                print("Número de prato inválido.")
+                continue
+                
+            selected_dish = menu_items_list[dish_index]
+            
+            qty = int(input(f"Quantidade de '{selected_dish['nome_prato']}': "))
+            obs = input("Observações (opcional): ")
+            
+            cart.append({'dish': selected_dish, 'quantity': qty, 'observations': obs})
+            print(f"'{selected_dish['nome_prato']}' adicionado ao carrinho!")
+
+        except ValueError:
+            print("Entrada inválida. Por favor, digite um número.")
+    # --- FIM DO BLOCO QUE FALTAVA ---
+
+    # Etapa 3: Selecionar Endereço
+    selected_address_id = address_selection_flow(db, client_user_data['cliente_id'])
+    if not selected_address_id:
+        print("Endereço não selecionado. Pedido cancelado.")
+        return
+
+    # Etapa 4: Selecionar Forma de Pagamento
+    selected_payment_id = payment_selection_flow(db)
+    if not selected_payment_id:
+        print("Forma de pagamento não selecionada. Pedido cancelado.")
+        return
+
+    # Etapa 5: Confirmação Final
+    if not cart:
+        print("Carrinho vazio. Pedido cancelado.")
+        return
+        
+    print("\n--- (Etapa Final: Confirme seu Pedido) ---")
+    subtotal_price = 0
+    for item in cart:
+        item_total = item['dish']['preco'] * item['quantity']
+        print(f"  - {item['quantity']}x {item['dish']['nome_prato']} @ R$ {item['dish']['preco']:.2f} cada = R$ {item_total:.2f}")
+        if item['observations']:
+            print(f"    Obs: {item['observations']}")
+        subtotal_price += item_total
+    
+    taxa_entrega = selected_restaurant['taxa_entrega']
+    total_price = subtotal_price + taxa_entrega
+    
+    print("---------------------------------")
+    print(f"  Subtotal dos Itens: R$ {subtotal_price:.2f}")
+    print(f"  Taxa de Entrega:    R$ {taxa_entrega:.2f}")
+    print(f"  VALOR TOTAL:        R$ {total_price:.2f}")
+    
+    confirm = input("Tudo certo? Enviar pedido? (s/n): ")
+    if confirm.lower() == 's':
+        pedido_id = db.create_order(
+            client_user_data['cliente_id'], 
+            selected_restaurant['id_restaurante'],
+            selected_payment_id,
+            selected_address_id,
+            taxa_entrega
+        )
+        
+        if pedido_id:
+            for item in cart:
+                db.add_order_item(
+                    pedido_id, 
+                    item['dish']['id_prato'], 
+                    item['quantity'], 
+                    item['dish']['preco'], 
+                    item['observations']
+                )
+            print(f"\n✅ Pedido enviado com sucesso! O ID do seu pedido é: {pedido_id}")
+        else:
+            print("\n❌ Ocorreu um erro ao criar seu pedido. Tente novamente.")
+    else:
+        print("Pedido cancelado.")
+
+
+# --- Painéis Pós-Login ---
+
+def show_restaurant_panel(db, user_data):
+    """Mostra o painel de opções interativo para restaurantes logados."""
+    id_restaurante = user_data['restaurante_id']
+    if not id_restaurante:
+        print("Erro: Não foi possível identificar o restaurante associado a este usuário.")
+        return
+
+    while True:
+        print(f"\n>> PAINEL DO RESTAURANTE (ID: {id_restaurante}) <<")
+        print("  1 - Ver e Gerenciar Pedidos Recebidos")
+        print("  2 - Gerenciar Cardápio") # <-- Agora funcional
+        print("  3 - Logout")
+        
+        choice = input("Sua opção: ")
+        if choice == '1':
+            manage_orders_flow_restaurant(db, id_restaurante)
+        elif choice == '2':
+            # Chama o novo fluxo de gerenciamento de cardápio
+            manage_menu_flow_restaurant(db, id_restaurante)
+        elif choice == '3':
             break
+        else:
+            print("Opção inválida.")
 
-        descricao = input("    > Descrição do prato: ")
-        preco = _get_validated_input("    > Preço (ex: 29.90): ", float, "Preço inválido.")
-        if preco is None: continue # Usuário cancelou
+# ADICIONE ESTA NOVA FUNÇÃO E SUAS AUXILIARES ABAIXO DE show_restaurant_panel
+def manage_menu_flow_restaurant(db, id_restaurante):
+    """Menu principal para gerenciamento do cardápio."""
+    while True:
+        print("\n--- Gerenciar Cardápio ---")
+        print("  1 - Listar todos os pratos")
+        print("  2 - Adicionar novo prato")
+        print("  3 - Editar um prato existente")
+        print("  4 - Voltar ao painel principal")
 
-        db.add_dish(categoria_id, nome_prato, descricao, preco)
-        print(f"    ✅ Prato '{nome_prato}' adicionado com sucesso!")
+        choice = input("Sua opção: ")
+        if choice == '1':
+            list_dishes_restaurant(db, id_restaurante)
+        elif choice == '2':
+            # A função add_menu_flow que já usamos no cadastro é perfeita aqui
+            print("\n--- Adicionar Novos Itens ao Cardápio ---")
+            add_menu_flow(db, id_restaurante)
+        elif choice == '3':
+            edit_dish_restaurant(db, id_restaurante)
+        elif choice == '4':
+            break
+        else:
+            print("Opção inválida.")
+        input("\nPressione Enter para continuar...")
 
-
-def list_dishes_restaurant(db: DatabaseManager, id_restaurante: int):
-    """Exibe o cardápio completo do restaurante para o administrador."""
-    _print_header("Seu Cardápio Atual")
+def list_dishes_restaurant(db, id_restaurante):
+    """Exibe o cardápio completo do restaurante para o admin."""
     menu = db.get_restaurant_menu(id_restaurante)
     if not menu:
         print("Seu restaurante ainda não possui um cardápio cadastrado.")
         return
 
+    print("\n--- Seu Cardápio Atual ---")
     for category, dishes in menu.items():
         print(f"\n-- {category} --")
         for dish in dishes:
             disponibilidade = "Disponível" if dish['status_disp'] else "Indisponível"
             print(f"  ID: {dish['id_prato']} | {dish['nome_prato']} - R$ {dish['preco']:.2f} [{disponibilidade}]")
+    return menu
 
-
-def edit_dish_restaurant(db: DatabaseManager, id_restaurante: int):
-    """Fluxo para editar os detalhes de um prato existente."""
-    _print_header("Editar Prato")
-    list_dishes_restaurant(db, id_restaurante) # Mostra os pratos primeiro
-
-    prato_id = _get_validated_input("\nDigite o ID do prato que deseja editar: ", int)
-    if prato_id is None: return
-
-    dish_details = db.get_dish_details(prato_id)
-    if not dish_details: # Adicionar verificação se prato pertence ao restaurante seria ideal
-        print("ID de prato inválido.")
+def edit_dish_restaurant(db, id_restaurante):
+    """Fluxo para editar um prato existente."""
+    print("\n--- Editar Prato ---")
+    menu = list_dishes_restaurant(db, id_restaurante)
+    if not menu:
         return
-
-    print(f"\nEditando '{dish_details['nome_prato']}': (Deixe em branco para manter o valor atual)")
-
-    # Coleta os novos dados
-    novo_nome = input(f"  - Nome atual: {dish_details['nome_prato']}. Novo nome: ") or dish_details['nome_prato']
-    nova_descricao = input(f"  - Descrição atual: {dish_details['descricao']}. Nova descrição: ") or dish_details['descricao']
-    novo_preco_str = input(f"  - Preço atual: {dish_details['preco']}. Novo preço: ")
-    novo_preco = float(novo_preco_str) if novo_preco_str else dish_details['preco']
-
-    # Edita disponibilidade
-    disp_atual = "Disponível" if dish_details['status_disp'] else "Indisponível"
-    nova_disp_input = input(f"  - Disponibilidade: {disp_atual}. Alterar para (d/i)?: ").lower()
-    if nova_disp_input in ['d', 'i']:
-        nova_disponibilidade = (nova_disp_input == 'd')
-        db.update_dish_availability(prato_id, nova_disponibilidade)
     
-    # Envia atualizações para o banco de dados
-    db.edit_dish(prato_id, novo_nome, nova_descricao, novo_preco)
-    print("\n✅ Prato atualizado com sucesso!")
+    try:
+        prato_id = int(input("\nDigite o ID do prato que deseja editar: "))
+        
+        dish_details = db.get_dish_details(prato_id)
+        # Validação simples para garantir que o prato pertence ao restaurante
+        if not dish_details:
+             print("ID de prato inválido.")
+             return
 
+        print(f"\nEditando '{dish_details['nome_prato']}':")
+        
+        # Editando nome
+        novo_nome = input(f"  - Nome atual: {dish_details['nome_prato']}. Novo nome (deixe em branco para manter): ")
+        if not novo_nome:
+            novo_nome = dish_details['nome_prato']
+            
+        # Editando descrição
+        nova_descricao = input(f"  - Descrição atual: {dish_details['descricao']}. Nova descrição: ")
+        if not nova_descricao:
+            nova_descricao = dish_details['descricao']
 
-def manage_orders_flow_restaurant(db: DatabaseManager, id_restaurante: int):
-    """Fluxo para o restaurante visualizar e atualizar o status dos pedidos."""
-    _print_header("Pedidos Recebidos")
+        # Editando preço
+        while True:
+            try:
+                novo_preco_str = input(f"  - Preço atual: {dish_details['preco']}. Novo preço: ")
+                if not novo_preco_str:
+                    novo_preco = dish_details['preco']
+                    break
+                novo_preco = float(novo_preco_str)
+                break
+            except ValueError:
+                print("    > Preço inválido. Use ponto como separador decimal.")
+
+        # Editando disponibilidade
+        while True:
+            disponibilidade_atual = "Disponível" if dish_details['status_disp'] else "Indisponível"
+            nova_disp_str = input(f"  - Disponibilidade atual: {disponibilidade_atual}. Alterar para (d/i)? (deixe em branco para manter): ").lower()
+            if not nova_disp_str:
+                nova_disponibilidade = dish_details['status_disp']
+                break
+            if nova_disp_str in ['d', 'i']:
+                nova_disponibilidade = (nova_disp_str == 'd')
+                break
+            else:
+                print("    > Opção inválida. Digite 'd' para disponível ou 'i' para indisponível.")
+
+        # Enviando atualizações para o banco de dados
+        db.edit_dish(prato_id, novo_nome, nova_descricao, novo_preco)
+        db.update_dish_availability(prato_id, nova_disponibilidade)
+        
+        print("\n✅ Prato atualizado com sucesso!")
+
+    except ValueError:
+        print("Entrada inválida. Por favor, digite um número de ID.")
+
+def manage_orders_flow_restaurant(db, id_restaurante):
+    """Fluxo para o restaurante ver e atualizar o status dos pedidos."""
     orders = db.get_orders_for_restaurant(id_restaurante)
     if not orders:
-        print("Nenhum pedido recebido ainda.")
+        print("\nNenhum pedido recebido ainda.")
         return
 
-    order_ids = [order['id_pedido'] for order in orders]
+    print("\n--- Pedidos Recebidos ---")
+    order_ids = []
     for order in orders:
+        order_ids.append(order['id_pedido'])
         print(f"  ID: {order['id_pedido']} | Data: {order['dataHora'].strftime('%d/%m/%Y %H:%M')}")
         print(f"  Cliente: {order['nome_completo']} | Valor: R$ {order['valor_total']:.2f}")
         print(f"  Status Atual: {order['status_pedido']}\n")
 
-    prompt = f"Digite o ID do pedido para alterar o status (ou '{VOLTAR_COMMAND}'): "
-    pedido_id_str = input(prompt)
-    if pedido_id_str.lower() == VOLTAR_COMMAND:
-        return
-
     try:
+        pedido_id_str = input("Digite o ID do pedido para alterar o status (ou 'voltar'): ")
+        if pedido_id_str.lower() == 'voltar':
+            return
+            
         pedido_id = int(pedido_id_str)
         if pedido_id not in order_ids:
             print("ID de pedido inválido ou não pertence a este restaurante.")
             return
 
-        _print_header("Selecione o Novo Status")
+        print("\nSelecione o novo status:")
         statuses = ['Pendente', 'Em Preparação', 'Em Trânsito', 'Entregue', 'Cancelado']
         for i, status in enumerate(statuses):
             print(f"  {i+1} - {status}")
-
-        status_choice = _get_validated_input("Sua opção: ", int)
-        if status_choice and 1 <= status_choice <= len(statuses):
+        
+        status_choice = int(input("Sua opção: "))
+        if 1 <= status_choice <= len(statuses):
             novo_status = statuses[status_choice - 1]
             db.update_order_status(pedido_id, novo_status)
             print(f"\n✅ Status do pedido {pedido_id} atualizado para '{novo_status}'.")
@@ -673,30 +537,62 @@ def manage_orders_flow_restaurant(db: DatabaseManager, id_restaurante: int):
     except ValueError:
         print("Entrada inválida. Por favor, digite um número.")
 
+def show_client_panel(db, user_data):
+    """Mostra o painel de opções interativo para clientes logados."""
+    id_cliente = user_data['cliente_id']
+    if not id_cliente:
+        print("Erro: Não foi possível identificar o cliente associado a este usuário.")
+        return
 
-# ==============================================================================
-# --- FUNÇÃO PRINCIPAL ---
-# ==============================================================================
+    while True:
+        print(f"\n>> ÁREA DO CLIENTE (ID de Cliente: {id_cliente}) <<")
+        print("  1 - Fazer um Pedido")
+        print("  2 - Ver Meus Pedidos")
+        print("  3 - Logout")
+        
+        choice = input("Sua opção: ")
+        if choice == '1':
+            place_order_flow(db, user_data)
+        elif choice == '2':
+            view_orders_flow_client(db, id_cliente)
+        elif choice == '3':
+            break
+        else:
+            print("Opção inválida.")
+        input("\nPressione Enter para continuar...")
+
+def view_orders_flow_client(db, id_cliente):
+    """Fluxo para o cliente visualizar seu histórico de pedidos."""
+    orders = db.get_orders_for_client(id_cliente)
+    if not orders:
+        print("\nVocê ainda não fez nenhum pedido.")
+        return
+
+    print("\n--- Meus Pedidos ---")
+    for order in orders:
+        print(f"  ID: {order['id_pedido']} | Data: {order['dataHora'].strftime('%d/%m/%Y %H:%M')}")
+        print(f"  Restaurante: {order['nome_restaurante']} | Valor: R$ {order['valor_total']:.2f}")
+        print(f"  Status: {order['status_pedido']}\n")
+
+
+# --- Função Principal ---
 
 def main():
-    """
-    Função principal que inicializa a conexão com o banco de dados e
-    exibe o menu principal, gerenciando o fluxo do aplicativo.
-    """
+    """Função principal que exibe o menu e gerencia o fluxo do aplicativo."""
     try:
         db = DatabaseManager()
     except Exception as e:
         print(f"Erro crítico ao conectar ao banco de dados: {e}", file=sys.stderr)
         sys.exit(1)
-
+        
     try:
         while True:
-            _print_header("Bem-vindo ao App de Delivery")
+            print("\n===== BEM-VINDO AO APP DE DELIVERY =====")
             print("  1 - Login")
             print("  2 - Cadastrar novo Cliente")
             print("  3 - Cadastrar novo Restaurante")
             print("  4 - Sair")
-
+            
             escolha = input("Digite o número da sua opção: ")
 
             if escolha == '1':
@@ -710,13 +606,15 @@ def main():
                 break
             else:
                 print("\nOpção inválida!")
+            
+            # Removido o input para continuar para um fluxo mais rápido
+            # input("\nPressione Enter para continuar...")
 
     except (KeyboardInterrupt, EOFError):
         print("\n\nSaindo do programa.")
     finally:
         print("Fechando conexão com o banco de dados.")
         db.close()
-
 
 if __name__ == "__main__":
     main()

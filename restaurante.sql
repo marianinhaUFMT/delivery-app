@@ -1,4 +1,7 @@
+DROP DATABASE IF EXISTS gerenciador_restaurantes;
 
+CREATE DATABASE gerenciador_restaurantes;
+USE gerenciador_restaurantes;
 
 -- tabela usuario
 CREATE TABLE IF NOT EXISTS usuario (

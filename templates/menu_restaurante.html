@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ restaurante.nome }}{% endblock %}
+
+{% block content %}
+    <h1 style="text-align: center;">{{ restaurante.nome }}</h1>
+    <p style="text-align: center; color: var(--text-light);">{{ restaurante.tipo_culinaria }}</p>
+
+    <div class="menu-list">
+        {% for categoria, pratos in menu.items() %}
+            <h2>{{ categoria }}</h2>
+            {% for prato in pratos %}
+                <div class="card">
+                    <div class="card-content">
+                        <h3>{{ prato.nome_prato }}</h3>
+                        <p>{{ prato.descricao }}</p>
+                        <p style="font-weight: bold; color: var(--text-dark); margin-top: 10px;">R$ {{ "%.2f"|format(prato.preco) }}</p>
+                    </div>
+                    <form action="{{ url_for('adicionar_ao_carrinho') }}" method="POST" style="margin-left: 20px;">
+                        <input type="hidden" name="prato_id" value="{{ prato.id_prato }}">
+                        <input type="hidden" name="restaurante_id" value="{{ restaurante.id_restaurante }}">
+    
+                        <button type="submit" class="btn" style="width: auto; padding: 10px 20px;">Adicionar</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endblock %}

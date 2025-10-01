@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Meus Pedidos{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 960px;">
+    <h1 style="text-align: center;">Meus Pedidos</h1>
+
+    <div class="order-list">
+        {% for pedido in pedidos %}
+            <div class="card">
+                <div class="card-content">
+                    <div>
+                        <h3>Pedido #{{ pedido.id_pedido }}</h3>
+                        <p><strong>Restaurante:</strong> {{ pedido.nome_restaurante }}</p>
+                        <p><strong>Data:</strong> {{ pedido.dataHora.strftime('%d/%m/%Y às %H:%M') }}</p>
+                        <p><strong>Valor Total:</strong> R$ {{ "%.2f"|format(pedido.valor_total) }}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-weight: bold; font-size: 1.1rem; color: {{ 'var(--green-success)' if pedido.status_pedido == 'Entregue' else 'var(--text-dark)' }};">
+                            {{ pedido.status_pedido }}
+                        </span>
+
+                        {% if pedido.status_pedido == 'Entregue' and not pedido.foi_avaliado %}
+                            <a href="{{ url_for('avaliar_pedido', pedido_id=pedido.id_pedido) }}" class="btn" style="width: auto; padding: 8px 12px; font-size: 0.9rem; margin-top: 10px;">
+                                Avaliar Pedido
+                            </a>
+                        {% elif pedido.foi_avaliado %}
+                            <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">(Avaliado)</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p style="text-align: center; margin-top: 30px;">Você ainda não fez nenhum pedido.</p>
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('painel_cliente') }}" class="btn" style="width: auto; background-color: var(--text-light);">Fazer Novo Pedido</a>
+    </div>
+</div>
+{% endblock %}

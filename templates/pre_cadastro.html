@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Escolha o Tipo de Cadastro{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="text-align: center;">
+    <h1>Como deseja se cadastrar?</h1>
+    <p style="color: var(--text-light); margin-bottom: 40px;">
+        Escolha o tipo de conta que você quer criar na nossa plataforma.
+    </p>
+
+    <div class="choice-buttons">
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('cadastro_cliente') }}" class="btn">Quero ser Cliente</a>
+        </div>
+        <div>
+            <a href="{{ url_for('cadastro_restaurante') }}" class="btn">Cadastrar meu Restaurante</a>
+        </div>
+    </div>
+
+    <p class="form-link" style="margin-top: 40px;">
+        Já tem uma conta? <a href="{{ url_for('login') }}">Voltar para o login</a>
+    </p>
+</div>
+{% endblock %}

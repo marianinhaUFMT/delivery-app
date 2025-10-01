@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Restaurante{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <h1>Cadastre seu Restaurante</h1>
+    <form method="POST" action="{{ url_for('cadastro_restaurante') }}">
+        
+        <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">Dados de Acesso</h3>
+        <div class="form-group">
+            <label>Nome de usuário:</label>
+            <input type="text" name="usuario" required>
+        </div>
+        <div class="form-group">
+            <label>Email de contato:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label>Senha:</label>
+            <input type="password" name="senha" required>
+        </div>
+
+        <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top: 30px; margin-bottom: 20px;">Dados do Restaurante</h3>
+        <div class="form-group">
+            <label>Nome do Restaurante:</label>
+            <input type="text" name="nome" required>
+        </div>
+         <div class="form-group">
+            <label>Telefone:</label>
+            <input type="tel" name="telefone" required>
+        </div>
+        <div class="form-group">
+            <label>Tipo de Culinária (Ex: Japonesa, Brasileira):</label>
+            <input type="text" name="tipo_culinaria" required>
+        </div>
+        <div class="form-group">
+            <label>Taxa de Entrega (Ex: 5.50):</label>
+            <input type="number" step="0.01" name="taxa_entrega" required>
+        </div>
+        <div class="form-group">
+            <label>Tempo de Entrega Estimado (Ex: 30-40 min):</label>
+            <input type="text" name="tempo_estimado" required>
+        </div>
+
+        <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top: 30px; margin-bottom: 20px;">Endereço</h3>
+        <div class="form-group">
+            <label>Rua:</label>
+            <input type="text" name="rua" required>
+        </div>
+        <div class="form-group">
+            <label>Número:</label>
+            <input type="text" name="num" required>
+        </div>
+        <div class="form-group">
+            <label>Bairro:</label>
+            <input type="text" name="bairro" required>
+        </div>
+        <div class="form-group">
+            <label>Cidade:</label>
+            <input type="text" name="cidade" required>
+        </div>
+        <div class="form-group">
+            <label>Estado (UF):</label>
+            <input type="text" name="estado" required>
+        </div>
+        <div class="form-group">
+            <label>CEP:</label>
+            <input type="text" name="cep" required>
+        </div>
+
+        <button type="submit" class="btn">Finalizar Cadastro</button>
+    </form>
+    <p class="form-link">
+        Já tem uma conta? <a href="{{ url_for('login') }}">Faça login</a>
+    </p>
+</div>
+{% endblock %}

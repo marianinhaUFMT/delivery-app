@@ -1,7 +1,4 @@
-DROP DATABASE IF EXISTS gerenciador_restaurantes;
 
-CREATE DATABASE gerenciador_restaurantes;
-USE gerenciador_restaurantes;
 
 -- tabela usuario
 CREATE TABLE IF NOT EXISTS usuario (
@@ -224,3 +221,17 @@ END;
 ALTER TABLE restaurante 
 ADD COLUMN taxa_entrega DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
 ADD COLUMN tempo_entrega_estimado VARCHAR(50);
+
+--SELECT usuario_id, is_restaurante FROM usuario WHERE usuario = 'rest1';
+
+-- Substitua '5' pelo ID que você encontrou
+--SELECT * FROM restaurante WHERE usuario_id = 2;
+
+ALTER TABLE pedido
+ADD COLUMN foi_avaliado BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- 1. Adiciona a coluna para ligar a avaliação ao pedido
+ALTER TABLE avaliacoes_restaurante ADD COLUMN id_pedido INT NULL AFTER id_cliente;
+
+-- 2. Faz a coluna de data e hora ser preenchida automaticamente
+ALTER TABLE avaliacoes_restaurante MODIFY COLUMN data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;

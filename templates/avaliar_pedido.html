@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Avaliar Pedido{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <h1>Avaliar Pedido #{{ pedido.id_pedido }}</h1>
+    <p>Restaurante: <strong>{{ pedido.nome_restaurante }}</strong></p>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Sua nota (de 1 a 5 estrelas):</label>
+            <input type="number" name="nota" min="1" max="5" required>
+        </div>
+        <div class="form-group">
+            <label>Deixe um comentário (opcional):</label>
+            <textarea name="feedback" rows="4" style="width: 100%; padding: 8px; border: 1px solid var(--border-color);"></textarea>
+        </div>
+        <button type="submit" class="btn">Enviar Avaliação</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Cliente{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <h1>Crie sua Conta</h1>
+    <form method="POST" action="{{ url_for('cadastro_cliente') }}">
+        <div class="form-group">
+            <label>Nome de usuário:</label>
+            <input type="text" name="usuario" required>
+        </div>
+        <div class="form-group">
+            <label>Nome Completo:</label>
+            <input type="text" name="nome_completo" required>
+        </div>
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label>Telefone:</label>
+            <input type="tel" name="telefone" required>
+        </div>
+        <div class="form-group">
+            <label>CPF:</label>
+            <input type="text" name="cpf" required>
+        </div>
+        <div class="form-group">
+            <label>Senha:</label>
+            <input type="password" name="senha" required>
+        </div>
+        <button type="submit" class="btn">Cadastrar</button>
+    </form>
+    <p class="form-link">
+        Já tem uma conta? <a href="{{ url_for('login') }}">Faça login</a>
+    </p>
+</div>
+{% endblock %}

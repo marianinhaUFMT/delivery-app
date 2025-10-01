@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar Endereço{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 600px;">
+    <h1>Adicionar Novo Endereço</h1>
+    <form method="POST" action="{{ url_for('adicionar_endereco') }}">
+        <div class="form-group">
+            <label>Rua:</label>
+            <input type="text" name="rua" required>
+        </div>
+        <div class="form-group">
+            <label>Número:</label>
+            <input type="text" name="num" required>
+        </div>
+        <div class="form-group">
+            <label>Bairro:</label>
+            <input type="text" name="bairro" required>
+        </div>
+        <div class="form-group">
+            <label>Cidade:</label>
+            <input type="text" name="cidade" required>
+        </div>
+        <div class="form-group">
+            <label>Estado (UF):</label>
+            <input type="text" name="estado" maxlength="2" required>
+        </div>
+        <div class="form-group">
+            <label>CEP:</label>
+            <input type="text" name="cep" required>
+        </div>
+        <button type="submit" class="btn">Cadastrar Endereço</button>
+    </form>
+    <p class="form-link">
+        <a href="{{ url_for(origem) }}">Voltar</a>
+    </p>
+</div>
+{% endblock %}

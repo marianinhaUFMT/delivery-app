@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Finalizar Pedido{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 800px;">
+    <h1>Finalizar Pedido</h1>
+    <form action="{{ url_for('finalizar_pedido') }}" method="POST">
+        
+        <h2>Selecione o Endereço de Entrega</h2>
+        {% if enderecos %}
+            {% for endereco in enderecos %}
+                <div style="margin-bottom: 10px;">
+                    <input type="radio" name="endereco_id" value="{{ endereco.endereco_id }}" id="addr{{ endereco.endereco_id }}" required>
+                    <label for="addr{{ endereco.endereco_id }}">
+                        {{ endereco.rua }}, {{ endereco.num }} - {{ endereco.bairro }}
+                    </label>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Você não tem endereços cadastrados. <a href="{{ url_for('adicionar_endereco', origem='checkout') }}">Adicionar Endereço</a></p>
+        {% endif %}
+
+        <h2 style="margin-top: 30px;">Selecione a Forma de Pagamento</h2>
+        {% if formas_pagamento %}
+             {% for forma in formas_pagamento %}
+                <div style="margin-bottom: 10px;">
+                    <input type="radio" name="pagamento_id" value="{{ forma.id_forma_pagamento }}" id="pay{{ forma.id_forma_pagamento }}" required>
+                    <label for="pay{{ forma.id_forma_pagamento }}">
+                        {{ forma.formaPag }}
+                    </label>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Nenhuma forma de pagamento disponível.</p>
+        {% endif %}
+        
+        <div class="totals" style="margin-top: 40px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <h3>Resumo:</h3>
+            <p>Subtotal dos Itens: <strong>R$ {{ "%.2f"|format(subtotal) }}</strong></p>
+            <p>Taxa de Entrega: <strong>R$ {{ "%.2f"|format(taxa_entrega) }}</strong></p>
+            <h3 style="color: var(--ifood-red);">Total a Pagar: R$ {{ "%.2f"|format(total) }}</h3>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button type="submit" class="btn">Confirmar e Enviar Pedido</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

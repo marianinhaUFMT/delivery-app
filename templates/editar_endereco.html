@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Editar Endereço{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <h1>Editar Endereço</h1>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Rua:</label>
+            <input type="text" name="rua" value="{{ endereco.rua }}" required>
+        </div>
+        <div class="form-group">
+            <label>Número:</label>
+            <input type="text" name="num" value="{{ endereco.num }}" required>
+        </div>
+        <div class="form-group">
+            <label>Bairro:</label>
+            <input type="text" name="bairro" value="{{ endereco.bairro }}" required>
+        </div>
+        <div class="form-group">
+            <label>Cidade:</label>
+            <input type="text" name="cidade" value="{{ endereco.cidade }}" required>
+        </div>
+        <div class="form-group">
+            <label>Estado (UF):</label>
+            <input type="text" name="estado" value="{{ endereco.estado }}" maxlength="2" required>
+        </div>
+        <div class="form-group">
+            <label>CEP:</label>
+            <input type="text" name="cep" value="{{ endereco.cep }}" required>
+        </div>
+
+        <button type="submit" class="btn">Salvar Alterações</button>
+    </form>
+     <p class="form-link">
+        <a href="{{ url_for('meus_enderecos') }}">Cancelar e Voltar</a>
+    </p>
+</div>
+{% endblock %}

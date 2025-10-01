@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Painel do Restaurante{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 960px;">
+    {% include 'restaurante_nav.html' %}
+
+    <h1>Pedidos Recebidos</h1>
+    <div class="order-list">
+        {% for pedido in pedidos %}
+            <div class="card">
+                <div class="card-content">
+                    <div>
+                        <h3>Pedido #{{ pedido.id_pedido }}</h3>
+                        <p>Cliente: {{ pedido.nome_completo }}</p>
+                        <p>Valor Total: R$ {{ "%.2f"|format(pedido.valor_total) }}</p>
+                    </div>
+                    <div>
+                        <form method="POST" action="{{ url_for('atualizar_status_pedido', pedido_id=pedido.id_pedido) }}" class="order-status-form">
+                            <select name="status" onchange="this.form.submit()">
+                                {% for status in statuses %}
+                                    <option value="{{ status.value }}" {% if pedido.status_pedido == status.value %}selected{% endif %}>
+                                        {{ status.value }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p style="text-align: center;">Nenhum pedido recebido ainda.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

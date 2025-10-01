@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>{% block title %}Delivery App{% endblock %}</title>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <a href="{{ url_for('index') }}" class="navbar-brand">DeliveryApp</a>
+            <div class="navbar-menu">
+                {% if session['user_id'] %}
+                    {% if not session['is_restaurante'] %}
+                        <a href="{{ url_for('meus_pedidos') }}">Meus Pedidos</a>
+                        
+                        <a href="{{ url_for('meus_enderecos') }}">Meus Endereços</a>
+
+                        <a href="{{ url_for('ver_carrinho') }}">
+                            Meu Carrinho 
+                            <span style="background-color: var(--ifood-red); color: white; border-radius: 50%; padding: 2px 7px; font-size: 0.8rem;">
+                                {{ session.get('cart', {}).get('items', {})|length }}
+                            </span>
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}">Sair</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Entrar</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

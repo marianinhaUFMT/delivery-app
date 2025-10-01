@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Restaurantes{% endblock %}
+
+{% block content %}
+    <h1 style="text-align: center;">Restaurantes Disponíveis</h1>
+    
+    <div class="restaurants-list">
+        {% for r in restaurantes %}
+            <a href="{{ url_for('menu_restaurante', restaurante_id=r.id_restaurante) }}" style="text-decoration: none;">
+                <div class="card">
+                    <div class="card-image">
+                        <img src="https://via.placeholder.com/150" alt="Logo do Restaurante">
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ r.nome }}</h3>
+                        <p>{{ r.tipo_culinaria }}</p>
+                        <p>Entrega: R$ {{ "%.2f"|format(r.taxa_entrega) }} &bull; {{ r.tempo_entrega_estimado }}</p>
+                    </div>
+                </div>
+            </a>
+        {% else %}
+            <p>Nenhum restaurante cadastrado no momento.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

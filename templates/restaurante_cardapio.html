@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Gerenciar Cardápio{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 960px;">
+    {% include 'restaurante_nav.html' %}
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
+        <h1>Seu Cardápio</h1>
+        <a href="{{ url_for('adicionar_prato') }}" class="btn" style="width: auto;">Adicionar Novo Prato</a>
+    </div>
+
+    <div class="add-category-form" style="margin-bottom: 40px;">
+        <h3>Adicionar Nova Categoria</h3>
+        <form action="{{ url_for('adicionar_categoria') }}" method="POST" style="display: flex; gap: 10px; align-items: center;">
+            <div class="form-group" style="flex-grow: 1; margin-bottom: 0;">
+                <input type="text" name="nome_categoria" placeholder="Nome da nova categoria (Ex: Bebidas)" required>
+            </div>
+            <button type="submit" class="btn" style="width: auto;">Adicionar Categoria</button>
+        </form>
+    </div>
+    
+    {% for categoria, pratos in menu.items() %}
+        <h2 style="padding-bottom: 10px;">{{ categoria }}</h2>
+        {% for prato in pratos %}
+            <div class="card">
+                <div class="card-content">
+                    <h3>{{ prato.nome_prato }}</h3>
+                    <p>{{ prato.descricao }}</p>
+                    <p style="font-weight: bold; margin-top: 5px;">R$ {{ "%.2f"|format(prato.preco) }}</p>
+                </div>
+                <div style="text-align: right;">
+                    <span style="display: block; margin-bottom: 10px; color: {{ 'var(--green-success)' if prato.status_disp else 'var(--ifood-red)' }}; font-weight: bold;">
+                        {{ 'Disponível' if prato.status_disp else 'Indisponível' }}
+                    </span>
+                    <a href="{{ url_for('editar_prato', prato_id=prato.id_prato) }}" class="btn" style="width: auto; background-color: var(--text-light);">Editar</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Você ainda não tem nenhum item no cardápio.</p>
+    {% endfor %}
+</div>
+{% endblock %}

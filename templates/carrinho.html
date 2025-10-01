@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Carrinho{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 800px;">
+    <h1>Meu Carrinho</h1>
+
+    {% if not cart['items'] %}
+        <p style="text-align: center;">Seu carrinho está vazio.</p>
+        <a href="{{ url_for('painel_cliente') }}" class="btn" style="background-color: var(--text-light); margin-top: 20px;">Ver Restaurantes</a>
+    {% else %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="text-align: left; padding: 10px;">Item</th>
+                    <th style="padding: 10px;">Qtd.</th>
+                    <th style="text-align: right; padding: 10px;">Preço Unit.</th>
+                    <th style="text-align: right; padding: 10px;">Subtotal</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_id, item in cart['items'].items() %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 15px 10px;">{{ item.nome }}</td>
+                    <td style="text-align: center; padding: 10px;">
+                        <form action="{{ url_for('atualizar_carrinho') }}" method="POST" style="display: inline-flex; align-items: center;">
+                            <input type="hidden" name="prato_id" value="{{ item_id }}">
+                            <input type="number" name="quantidade" value="{{ item.quantidade }}" min="1" style="width: 60px; text-align: center;">
+                            <button type="submit" style="margin-left: 5px; cursor: pointer;">Atualizar</button>
+                        </form>
+                    </td>
+                    <td style="text-align: right; padding: 10px;">R$ {{ "%.2f"|format(item.preco) }}</td>
+                    <td style="text-align: right; padding: 10px;">R$ {{ "%.2f"|format(item.preco * item.quantidade) }}</td>
+                    <td style="text-align: center;">
+                        <a href="{{ url_for('remover_item_carrinho', prato_id=item_id) }}" style="color: var(--ifood-red); text-decoration: none;">Remover</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totals" style="margin-top: 30px; text-align: right;">
+            <p>Subtotal dos Itens: <strong>R$ {{ "%.2f"|format(subtotal) }}</strong></p>
+            <p>Taxa de Entrega: <strong>R$ {{ "%.2f"|format(taxa_entrega) }}</strong></p>
+            <h3 style="color: var(--ifood-red);">Total do Pedido: R$ {{ "%.2f"|format(total) }}</h3>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <a href="{{ url_for('checkout') }}" class="btn">Finalizar Pedido</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Endereços{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 800px;">
+    <h1>Meus Endereços</h1>
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('adicionar_endereco', origem='meus_enderecos') }}" class="btn">Adicionar Novo Endereço</a>
+    </div>
+    {% if enderecos %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="text-align: left; padding: 10px;">Endereço</th>
+                    <th style="text-align: right; padding: 10px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for endereco in enderecos %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 15px 10px;">
+                        {{ endereco.rua }}, {{ endereco.num }} - {{ endereco.bairro }} | CEP: {{ endereco.cep }}
+                    </td>
+                    <td style="text-align: right; padding: 10px;">
+                        <a href="{{ url_for('editar_endereco', endereco_id=endereco.endereco_id) }}" style="color: var(--ifood-red); text-decoration: none;">Editar</a> |
+                        <a href="{{ url_for('excluir_endereco', endereco_id=endereco.endereco_id) }}" style="color: var(--ifood-red); text-decoration: none;" onclick="return confirm('Tem certeza que deseja excluir este endereço?')">Excluir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center;">Nenhum endereço cadastrado.</p>
+    {% endif %}
+    <p class="form-link">
+        <a href="{{ url_for('painel_cliente') }}">Voltar ao painel</a>
+    </p>
+</div>
+{% endblock %}

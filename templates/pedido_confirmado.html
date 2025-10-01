@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Pedido Confirmado!{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="text-align: center;">
+    <h1 style="color: var(--green-success);">Pedido Realizado com Sucesso!</h1>
+    <p>Seu pedido foi enviado para o restaurante.</p>
+    <p>Você pode acompanhar o status na área "Meus Pedidos".</p>
+    
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('painel_cliente') }}" class="btn">Voltar aos Restaurantes</a>
+    </div>
+</div>
+{% endblock %}

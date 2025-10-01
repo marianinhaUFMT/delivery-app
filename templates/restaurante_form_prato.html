@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if prato else 'Adicionar' }} Prato{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    {% include 'restaurante_nav.html' %}
+    <h1>{{ 'Editar' if prato else 'Adicionar' }} Prato</h1>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Nome do Prato:</label>
+            <input type="text" name="nome_prato" value="{{ prato.nome_prato if prato else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label>Descrição:</label>
+            <textarea name="descricao" rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border-color);">{{ prato.descricao if prato else '' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>Preço (Ex: 29.90):</label>
+            <input type="number" step="0.01" name="preco" value="{{ prato.preco if prato else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label>Categoria:</label>
+            <select name="categoria_id" required>
+                {% for cat in categorias %}
+                    <option value="{{ cat.categoria_id }}" {% if prato and prato.categoria_id == cat.categoria_id %}selected{% endif %}>
+                        {{ cat.nome_categoria }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if prato %}
+        <div class="form-group">
+            <label>Disponibilidade:</label>
+            <select name="status_disp">
+                <option value="1" {% if prato.status_disp %}selected{% endif %}>Disponível</option>
+                <option value="0" {% if not prato.status_disp %}selected{% endif %}>Indisponível</option>
+            </select>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn">Salvar</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Avaliações Recebidas{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 960px;">
+    {% include 'restaurante_nav.html' %}
+    <h1>Avaliações Recebidas</h1>
+
+    <div class="reviews-list">
+        {% for avaliacao in avaliacoes %}
+            <div class="card">
+                <div class="card-content" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h3>Cliente: {{ avaliacao.nome_completo }}</h3>
+                        <span style="font-size: 1.2rem; font-weight: bold;">{{ avaliacao.nota }} ★</span>
+                    </div>
+                    {% if avaliacao.feedback %}
+                        <p style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            "{{ avaliacao.feedback }}"
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <p style="text-align: center;">Nenhuma avaliação recebida ainda.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -19,7 +19,7 @@ A plataforma simula um serviço de delivery de comida, permitindo que usuários 
   * Sistema de carrinho de compras funcional, permitindo adicionar, remover e atualizar itens.
   * Gerenciamento de múltiplos endereços de entrega.
   * Finalização de pedido com seleção de endereço e forma de pagamento.
-  * Acompanhamento do status do pedido (`Pendente`, `Em Preparação`, etc.) em tempo real.
+  * Acompanhamento do status do pedido (`Pendente`, `Em Preparação`, etc.).
   * Sistema de avaliação do pedido após a entrega.
 
 ### Para Restaurantes
@@ -27,7 +27,7 @@ A plataforma simula um serviço de delivery de comida, permitindo que usuários 
   * Cadastro e Login com perfil de restaurante.
   * Painel administrativo para gerenciamento.
   * Recebimento de novos pedidos em tempo real.
-  * Atualização do status dos pedidos, notificando o cliente instantaneamente.
+  * Atualização do status dos pedidos, notificando o cliente.
   * Gerenciamento completo do cardápio: criação de categorias e adição/edição/remoção de pratos.
   * Edição das informações do restaurante (nome, telefone, taxa de entrega, etc.).
   * Definição e edição dos horários de funcionamento para cada dia da semana.
@@ -84,7 +84,7 @@ Siga os passos abaixo para configurar e rodar a aplicação em seu ambiente loca
     ```
 
 4.  **Configure a Conexão com o Banco de Dados:**
-    A aplicação se conecta a um banco de dados MySQL hospedado no Railway. No nosso caso, já está configurado com as credenciais corretas para o banco em nuvem no arquivo `my.cnf`
+    A aplicação se conecta a um banco de dados MySQL hospedado no site Railway. No nosso caso, já está configurado com as credenciais corretas para o banco em nuvem no arquivo `my.cnf`
 
 ### 2\. Executando a Aplicação
 

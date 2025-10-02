@@ -100,7 +100,13 @@ body {
 .btn:hover {
     opacity: 0.9;
 }
-
+/* --- Classes de Utilidade --- */
+.center-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
 
 /* --- Lista de Restaurantes (Novo Design) --- */
 

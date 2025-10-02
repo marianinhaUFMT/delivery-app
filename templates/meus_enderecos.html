@@ -5,7 +5,7 @@
 {% block content %}
 <div class="form-wrapper" style="max-width: 800px;">
     <h1>Meus Endereços</h1>
-    <div style="margin-bottom: 20px;">
+    <div class="center-content" style="margin-bottom: 20px;">
         <a href="{{ url_for('adicionar_endereco', origem='meus_enderecos') }}" class="btn">Adicionar Novo Endereço</a>
     </div>
     {% if enderecos %}

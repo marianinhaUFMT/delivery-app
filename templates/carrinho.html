@@ -7,8 +7,10 @@
     <h1>Meu Carrinho</h1>
 
     {% if not cart['items'] %}
-        <p style="text-align: center;">Seu carrinho está vazio.</p>
-        <a href="{{ url_for('painel_cliente') }}" class="btn" style="background-color: var(--text-light); margin-top: 20px;">Ver Restaurantes</a>
+        <p class="center-content">Seu carrinho está vazio.</p>
+        <div class="center-content">
+            <a href="{{ url_for('painel_cliente') }}" class="btn" style="background-color: var(--text-light); margin-top: 20px;">Ver Restaurantes</a>
+        </div>
     {% else %}
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
@@ -47,7 +49,7 @@
             <h3 style="color: var(--ifood-red);">Total do Pedido: R$ {{ "%.2f"|format(total) }}</h3>
         </div>
 
-        <div style="margin-top: 30px;">
+        <div class="center-content" style="margin-top: 30px;">
             <a href="{{ url_for('checkout') }}" class="btn">Finalizar Pedido</a>
         </div>
     {% endif %}

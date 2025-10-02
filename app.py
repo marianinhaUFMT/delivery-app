@@ -94,6 +94,8 @@ def cadastro_cliente():
             
     return render_template('cadastro_cliente.html')
 
+# Em app.py
+
 @app.route("/cadastro_restaurante", methods=['GET', 'POST'])
 def cadastro_restaurante():
     if request.method == 'POST':
@@ -111,14 +113,24 @@ def cadastro_restaurante():
             "cidade": request.form['cidade'], "estado": request.form['estado'], "cep": request.form['cep']
         }
 
-        restaurante_id = db.create_restaurant(
+        # A função create_restaurant precisa retornar mais detalhes para o login automático
+        # VAMOS PRECISAR ALTERAR ELA TAMBÉM (ver próximo passo)
+        novo_restaurante_data = db.create_restaurant(
             usuario, email, senha, nome, telefone, tipo_culinaria,
             endereco, taxa_entrega, tempo_estimado
         )
         
-        if restaurante_id:
-            flash('Restaurante cadastrado com sucesso! Faça seu login.', 'success')
-            return redirect(url_for('login'))
+        if novo_restaurante_data:
+            # --- LÓGICA DE LOGIN AUTOMÁTICO ADICIONADA ---
+            session['user_id'] = novo_restaurante_data['usuario_id']
+            session['is_restaurante'] = True
+            session['restaurante_id'] = novo_restaurante_data['restaurante_id']
+            session['cliente_id'] = None
+            
+            flash('Restaurante cadastrado com sucesso! Agora, por favor, configure seus horários de funcionamento.', 'success')
+            
+            # --- REDIRECIONAMENTO INTELIGENTE ---
+            return redirect(url_for('restaurante_horarios'))
         else:
             flash('Erro ao cadastrar restaurante. O nome de usuário ou email podem já estar em uso.', 'danger')
             return redirect(url_for('cadastro_restaurante'))
@@ -127,7 +139,6 @@ def cadastro_restaurante():
 
 
 # --- ROTAS DO CLIENTE E CARDÁPIO ---
-
 @app.route("/painel_cliente")
 def painel_cliente():
     if 'user_id' not in session or session.get('is_restaurante'):
@@ -211,24 +222,67 @@ def meus_enderecos():
     enderecos = db.get_client_addresses(cliente_id)
     return render_template('meus_enderecos.html', enderecos=enderecos)
 
+# Em app.py, substitua a função menu_restaurante
 @app.route("/restaurante/<int:restaurante_id>")
 def menu_restaurante(restaurante_id):
     if 'user_id' not in session or session.get('is_restaurante'):
         flash('Faça login para continuar.', 'danger')
         return redirect(url_for('login'))
 
-    restaurantes = db.get_all_restaurants()
-    restaurante_info = next((r for r in restaurantes if r['id_restaurante'] == restaurante_id), None)
+    # Usamos get_restaurant_details para pegar as infos e verificamos o status separadamente
+    restaurante_info = db.get_restaurant_details(restaurante_id)
 
     if not restaurante_info:
         return "Restaurante não encontrado", 404
+        
+    # Verifica se está aberto
+    restaurante_esta_aberto = db.is_restaurant_open(restaurante_id)
 
     menu = db.get_restaurant_menu(restaurante_id)
-    return render_template('menu_restaurante.html', menu=menu, restaurante=restaurante_info)
+    
+    # Passa a informação 'aberto' para o template
+    return render_template('menu_restaurante.html', menu=menu, restaurante=restaurante_info, aberto=restaurante_esta_aberto)
+
+# Em app.py
+
+@app.route("/painel_restaurante/horarios", methods=['GET', 'POST'])
+def restaurante_horarios():
+    if 'user_id' not in session or not session.get('is_restaurante'):
+        return redirect(url_for('login'))
+
+    id_restaurante = session['restaurante_id']
+    
+    if request.method == 'POST':
+        horarios = {}
+        dias_semana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+        for dia in dias_semana:
+            # Verifica se o dia foi "ativado" pelo checkbox
+            if f"ativo_{dia}" in request.form:
+                abertura = request.form.get(f"abertura_{dia}")
+                fechamento = request.form.get(f"fechamento_{dia}")
+                horarios[dia] = {'abertura': abertura, 'fechamento': fechamento}
+            else:
+                 # Se o dia não está ativo, envia horários vazios para apagar do banco
+                horarios[dia] = {'abertura': None, 'fechamento': None}
+        
+        if db.update_schedule(id_restaurante, horarios):
+            flash('Horários atualizados com sucesso!', 'success')
+        else:
+            flash('Erro ao atualizar os horários.', 'danger')
+        
+        return redirect(url_for('restaurante_horarios'))
+
+    # Se for GET, busca os horários existentes para preencher o formulário
+    horarios_atuais_lista = db.get_restaurant_schedule(id_restaurante)
+    # Converte a lista para um dicionário para fácil acesso no template
+    horarios_atuais = {h['dia_semana']: h for h in horarios_atuais_lista}
+    
+    dias_semana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+    return render_template('restaurante_horarios.html', horarios=horarios_atuais, dias_semana=dias_semana)
 
 
 # --- ROTAS DO CARRINHO E CHECKOUT ---
-
 @app.route('/carrinho/adicionar', methods=['POST'])
 def adicionar_ao_carrinho():
     if 'user_id' not in session or session.get('is_restaurante'):
@@ -236,6 +290,12 @@ def adicionar_ao_carrinho():
 
     prato_id = request.form.get('prato_id')
     restaurante_id = int(request.form.get('restaurante_id'))
+
+    # --- VERIFICAÇÃO ADICIONADA ---
+    if not db.is_restaurant_open(restaurante_id):
+        flash('Desculpe, este restaurante está fechado e não está aceitando pedidos no momento.', 'danger')
+        return redirect(url_for('menu_restaurante', restaurante_id=restaurante_id))
+    # --- FIM DA VERIFICAÇÃO ---
 
     if 'cart' not in session:
         session['cart'] = {'items': {}, 'restaurante_id': None, 'taxa_entrega': 0.0}
@@ -560,7 +620,7 @@ def restaurante_endereco():
         db.update_restaurant_address(restaurante['id_end_rest'], endereco)
         
         flash('Dados atualizados com sucesso!', 'success')
-        return redirect(url_for('restaurante_endereco'))
+        return redirect(url_for('painel_restaurante'))
 
     return render_template('restaurante_endereco.html', restaurante=restaurante)
 

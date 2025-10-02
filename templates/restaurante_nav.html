@@ -1,6 +1,68 @@
-<nav style="display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-    <a href="{{ url_for('painel_restaurante') }}">Pedidos</a>
-    <a href="{{ url_for('restaurante_cardapio') }}">Cardápio</a>
-    <a href="{{ url_for('restaurante_endereco') }}">Meu Endereço</a>
-    <a href="{{ url_for('restaurante_avaliacoes') }}">Avaliações</a>
+<nav class="sub-nav">
+    <ul>
+        <li>
+            <a href="{{ url_for('painel_restaurante') }}" 
+               class="{{ 'active' if request.endpoint == 'painel_restaurante' else '' }}">
+               Pedidos
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('restaurante_cardapio') }}" 
+               class="{{ 'active' if request.endpoint == 'restaurante_cardapio' else '' }}">
+               Cardápio
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('restaurante_horarios') }}" 
+               class="{{ 'active' if request.endpoint == 'restaurante_horarios' else '' }}">
+               Meus Horários
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('restaurante_endereco') }}" 
+               class="{{ 'active' if request.endpoint == 'restaurante_endereco' else '' }}">
+               Dados e Endereço
+            </a>
+        </li>
+         <li>
+            <a href="{{ url_for('restaurante_avaliacoes') }}" 
+               class="{{ 'active' if request.endpoint == 'restaurante_avaliacoes' else '' }}">
+               Avaliações
+            </a>
+        </li>
+    </ul>
 </nav>
+
+<style>
+/* Estilos simples para a sub-navegação */
+.sub-nav {
+    width: 100%;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+.sub-nav ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.sub-nav ul li a {
+    display: block;
+    padding: 1rem 1.5rem;
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+.sub-nav ul li a:hover {
+    background-color: #e9ecef;
+    color: var(--primary-color);
+}
+.sub-nav ul li a.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+}
+</style>

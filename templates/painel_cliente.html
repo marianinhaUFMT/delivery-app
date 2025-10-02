@@ -16,7 +16,13 @@
                         <h3>{{ r.nome }}</h3>
                         <p>{{ r.tipo_culinaria }}</p>
                         <p>Entrega: R$ {{ "%.2f"|format(r.taxa_entrega) }} &bull; {{ r.tempo_entrega_estimado }}</p>
-                    </div>
+                        
+                        {% if r.aberto %}
+                            <p style="color: green; font-weight: bold;">Aberto</p>
+                        {% else %}
+                            <p style="color: red; font-weight: bold;">Fechado</p>
+                        {% endif %}
+                        </div>
                 </div>
             </a>
         {% else %}

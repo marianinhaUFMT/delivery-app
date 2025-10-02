@@ -2,7 +2,7 @@
 {% block title %}Gerenciar Endereço e Dados{% endblock %}
 
 {% block content %}
-<div class="form-wrapper">
+<div class="form-wrapper" style="max-width: 960px;">
     {% include 'restaurante_nav.html' %}
     <h1>Meus Dados e Endereço</h1>
     
@@ -55,7 +55,17 @@
             <input type="text" name="cep" value="{{ restaurante.cep }}" required>
         </div>
 
-        <button type="submit" class="btn">Salvar Alterações</button>
+        <div class="form-actions">
+             <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
     </form>
 </div>
+
+<style>
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+</style>
 {% endblock %}

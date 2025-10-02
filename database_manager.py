@@ -1,5 +1,7 @@
 import mysql.connector
 import sys
+from datetime import datetime
+import pytz
 
 class DatabaseManager:
     def __init__(self):
@@ -39,7 +41,6 @@ class DatabaseManager:
             return None
 
     # -------------------- RESTAURANTE --------------------
-    # MODIFICADO: Aplicado o 'with' statement e hashing de senha
     def create_restaurant(self, usuario, email, senha, nome, telefone, tipo_culinaria, endereco, taxa_entrega, tempo_estimado):
         try:
             with self.connection.cursor() as cursor:
@@ -51,7 +52,7 @@ class DatabaseManager:
 
                 if usuario_id == 0:
                     print(f"Usuário '{usuario}' ou email '{email}' já existe. Não é possível criar novo restaurante.")
-                    self.connection.rollback() # Garante que nada seja salvo se o usuário já existir
+                    self.connection.rollback()
                     return None
 
                 cursor.execute(
@@ -66,26 +67,91 @@ class DatabaseManager:
                     VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                     (usuario_id, id_end_rest, nome, telefone, tipo_culinaria, taxa_entrega, tempo_estimado)
                 )
+                restaurante_id = cursor.lastrowid
                 self.connection.commit()
-                return cursor.lastrowid
+                
+                # NOVO: Retorna um dicionário com os IDs necessários para o login automático
+                return {'restaurante_id': restaurante_id, 'usuario_id': usuario_id}
         except mysql.connector.Error as e:
             print(f"Erro ao criar restaurante: {e}")
             self.connection.rollback()
             return None
 
     # -------------------- HORÁRIOS --------------------
-    # MODIFICADO: Aplicado o 'with' statement
-    def add_schedule(self, id_restaurante, dia_semana, horario_abertura, horario_fechamento):
+
+    def get_restaurant_schedule(self, id_restaurante):
+        """Busca todos os horários de funcionamento cadastrados para um restaurante."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT dia_semana, horario_abertura, horario_fechamento FROM horarios_funcionamento_restaurante WHERE id_restaurante = %s",
+                    (id_restaurante,)
+                )
+                return cursor.fetchall()
+        except mysql.connector.Error as e:
+            print(f"Erro ao buscar horários: {e}")
+            return []
+
+    def update_schedule(self, id_restaurante, horarios):
+        """Apaga os horários antigos e insere os novos para um restaurante."""
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(
-                    "INSERT IGNORE INTO horarios_funcionamento_restaurante (id_restaurante, dia_semana, horario_abertura, horario_fechamento) VALUES (%s, %s, %s, %s)",
-                    (id_restaurante, dia_semana, horario_abertura, horario_fechamento)
-                )
+                # 1. Apaga todos os horários existentes para este restaurante
+                cursor.execute("DELETE FROM horarios_funcionamento_restaurante WHERE id_restaurante = %s", (id_restaurante,))
+                
+                # 2. Insere os novos horários
+                sql = "INSERT INTO horarios_funcionamento_restaurante (id_restaurante, dia_semana, horario_abertura, horario_fechamento) VALUES (%s, %s, %s, %s)"
+                valores = []
+                for dia, tempos in horarios.items():
+                    if tempos['abertura'] and tempos['fechamento']: # Só insere se ambos os horários foram fornecidos
+                        valores.append((id_restaurante, dia, tempos['abertura'], tempos['fechamento']))
+                
+                if valores:
+                    cursor.executemany(sql, valores)
+                
                 self.connection.commit()
+                return True
         except mysql.connector.Error as e:
-            print(f"Erro ao adicionar horário: {e}")
+            print(f"Erro ao atualizar horários: {e}")
             self.connection.rollback()
+            return False
+
+    def is_restaurant_open(self, id_restaurante):
+        """Verifica se um restaurante está aberto no momento atual (fuso de Brasília)."""
+        try:
+            # Mapeia o dia da semana do Python (0=Segunda) para o ENUM do SQL
+            dias_semana_map = {
+                0: 'Segunda', 1: 'Terça', 2: 'Quarta', 3: 'Quinta',
+                4: 'Sexta', 5: 'Sábado', 6: 'Domingo'
+            }
+
+            # Define o fuso horário correto (ex: Brasília, que é UTC-3)
+            fuso_horario_brasilia = pytz.timezone('America/Sao_Paulo')
+            agora = datetime.now(fuso_horario_brasilia)
+
+            dia_semana_atual = dias_semana_map[agora.weekday()]
+            hora_atual = agora.time()
+
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT horario_abertura, horario_fechamento FROM horarios_funcionamento_restaurante WHERE id_restaurante = %s AND dia_semana = %s",
+                    (id_restaurante, dia_semana_atual)
+                )
+                horario = cursor.fetchone()
+
+                if not horario or not horario['horario_abertura'] or not horario['horario_fechamento']:
+                    return False # Não funciona hoje ou não tem horário cadastrado
+
+                # Converte os timedelta do banco para time do Python
+                abertura = (datetime.min + horario['horario_abertura']).time()
+                fechamento = (datetime.min + horario['horario_fechamento']).time()
+
+                return abertura <= hora_atual < fechamento
+
+        except mysql.connector.Error as e:
+            print(f"Erro ao verificar se o restaurante está aberto: {e}")
+            return False
+
 
     # -------------------- PEDIDOS --------------------
     # MODIFICADO: Aplicado o 'with' statement
@@ -250,12 +316,21 @@ class DatabaseManager:
 
     # MODIFICADO: Aplicado o 'with' statement
     def get_all_restaurants(self):
+        """Busca todos os restaurantes e adiciona o status (aberto/fechado)."""
+        restaurantes = []
         try:
             with self.connection.cursor(dictionary=True) as cursor:
                 cursor.execute("SELECT id_restaurante, nome, tipo_culinaria, taxa_entrega, tempo_entrega_estimado FROM restaurante")
-                return cursor.fetchall()
+                restaurantes_db = cursor.fetchall()
+            
+            # Para cada restaurante, verifica se está aberto
+            for r in restaurantes_db:
+                r['aberto'] = self.is_restaurant_open(r['id_restaurante'])
+                restaurantes.append(r)
+
+            return restaurantes
         except mysql.connector.Error as e:
-            print(f"Erro ao buscar restaurantes: {e}")
+            print(f"Erro ao buscar todos os restaurantes: {e}")
             return []
 
     # MODIFICADO: Aplicado o 'with' statement

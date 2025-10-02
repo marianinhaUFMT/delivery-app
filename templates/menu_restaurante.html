@@ -16,11 +16,20 @@
                         <p>{{ prato.descricao }}</p>
                         <p style="font-weight: bold; color: var(--text-dark); margin-top: 10px;">R$ {{ "%.2f"|format(prato.preco) }}</p>
                     </div>
-                    <form action="{{ url_for('adicionar_ao_carrinho') }}" method="POST" style="margin-left: 20px;">
+                    {% if not aberto %}
+                        <div class="alert alert-danger" role="alert" style="text-align: center;">
+                            <strong>Este restaurante está fechado no momento.</strong><br>
+                            Não é possível realizar pedidos agora.
+                        </div>
+                    {% endif %}
+
+                    <form action="{{ url_for('adicionar_ao_carrinho') }}" method="post">
                         <input type="hidden" name="prato_id" value="{{ prato.id_prato }}">
                         <input type="hidden" name="restaurante_id" value="{{ restaurante.id_restaurante }}">
-    
-                        <button type="submit" class="btn" style="width: auto; padding: 10px 20px;">Adicionar</button>
+                        <button type="submit" class="btn btn-sm btn-primary" 
+                                {% if not prato.status_disp or not aberto %}disabled{% endif %}>
+                            {% if not prato.status_disp %}Indisponível{% else %}Adicionar{% endif %}
+                        </button>
                     </form>
                 </div>
             {% endfor %}

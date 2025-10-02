@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Horários de Funcionamento{% endblock %}
+
+{% block content %}
+<div class="form-wrapper" style="max-width: 960px;">
+    
+    {% include 'restaurante_nav.html' %}
+
+    <h1>Gerenciar Horários de Funcionamento</h1>
+    <p>Marque os dias em que seu restaurante funciona e defina os horários de abertura e fechamento.</p>
+
+    <form method="POST" action="{{ url_for('restaurante_horarios') }}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Dia da Semana</th>
+                    <th>Funciona?</th>
+                    <th>Abertura</th>
+                    <th>Fechamento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dia in dias_semana %}
+                {% set horario_dia = horarios.get(dia) %}
+                <tr>
+                    <td>{{ dia }}</td>
+                    <td>
+                        <input type="checkbox" name="ativo_{{ dia }}" id="ativo_{{ dia }}" 
+                               {% if horario_dia %}checked{% endif %}
+                               onchange="toggleHorarios('{{ dia }}')">
+                    </td>
+                    <td>
+                        <input type="time" class="form-control" name="abertura_{{ dia }}" id="abertura_{{ dia }}"
+                               value="{{ horario_dia.horario_abertura | string | replace('None', '') if horario_dia else '' }}" 
+                               {% if not horario_dia %}disabled{% endif %}>
+                    </td>
+                    <td>
+                        <input type="time" class="form-control" name="fechamento_{{ dia }}" id="fechamento_{{ dia }}"
+                               value="{{ horario_dia.horario_fechamento | string | replace('None', '') if horario_dia else '' }}"
+                               {% if not horario_dia %}disabled{% endif %}>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Horários</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 20px;
+    }
+</style>
+
+<script>
+function toggleHorarios(dia) {
+    const checkbox = document.getElementById(`ativo_${dia}`);
+    const aberturaInput = document.getElementById(`abertura_${dia}`);
+    const fechamentoInput = document.getElementById(`fechamento_${dia}`);
+
+    if (checkbox.checked) {
+        aberturaInput.disabled = false;
+        fechamentoInput.disabled = false;
+        aberturaInput.required = true;
+        fechamentoInput.required = true;
+    } else {
+        aberturaInput.disabled = true;
+        fechamentoInput.disabled = true;
+        aberturaInput.required = false;
+        fechamentoInput.required = false;
+        aberturaInput.value = '';
+        fechamentoInput.value = '';
+    }
+}
+</script>
+{% endblock %}

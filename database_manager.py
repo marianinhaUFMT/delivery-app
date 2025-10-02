@@ -130,6 +130,17 @@ class DatabaseManager:
         except mysql.connector.Error as e:
             print(f"Erro ao atualizar status do pedido: {e}")
             self.connection.rollback()
+    
+    def get_order_details(self, pedido_id):
+        """Busca os detalhes de um único pedido, incluindo o ID do cliente."""
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT * FROM pedido WHERE id_pedido = %s", (pedido_id,))
+                return cursor.fetchone()
+        except mysql.connector.Error as e:
+            print(f"Erro ao buscar detalhes do pedido: {e}")
+            return None
+
 
 
     # -------------------- AVALIAÇÃO --------------------

@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask_socketio import SocketIO, join_room, leave_room # MODIFICADO
 from database_manager import DatabaseManager
 from enum import Enum
 import os
@@ -14,6 +15,8 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 db = DatabaseManager()
 
+# INICIALIZAÇÃO DO SOCKET.IO
+socketio = SocketIO(app)
 
 # --- ROTAS DE AUTENTICAÇÃO E CADASTRO ---
 
@@ -421,6 +424,16 @@ def finalizar_pedido():
                 item_details['preco'], ""
             )
         db.update_order_status(pedido_id, StatusPedido.PENDENTE.value)
+        
+        # --- PARTE MODIFICADA ---
+        # Após salvar, busca os dados completos do novo pedido
+        pedidos_restaurante = db.get_orders_for_restaurant(restaurante_id)
+        novo_pedido_info = next((p for p in pedidos_restaurante if p['id_pedido'] == pedido_id), None)
+        if novo_pedido_info:
+            # Emite o evento 'novo_pedido' apenas para a "sala" do restaurante específico
+            socketio.emit('novo_pedido', novo_pedido_info, room=f'restaurante_{restaurante_id}')
+        # --- FIM DA MODIFICAÇÃO ---
+
         session.pop('cart', None)
         return redirect(url_for('pedido_confirmado', pedido_id=pedido_id))
     else:
@@ -494,38 +507,37 @@ def adicionar_prato():
     categorias = db.get_restaurant_categories(id_restaurante)
     return render_template('restaurante_form_prato.html', categorias=categorias)
 
-# app.py
 
 @app.route("/painel_restaurante/prato/editar/<int:prato_id>", methods=['GET', 'POST'])
 def editar_prato(prato_id):
     if 'user_id' not in session or not session.get('is_restaurante'):
         return redirect(url_for('login'))
 
+    id_restaurante = session['restaurante_id']
+    
     if request.method == 'POST':
-        # --- LÓGICA MODIFICADA AQUI ---
         nome = request.form.get('nome_prato')
         descricao = request.form.get('descricao')
         preco = request.form.get('preco')
+        categoria_id = request.form.get('categoria_id')
         status = bool(int(request.form.get('status_disp')))
-        # Pega a nova categoria do formulário
-        categoria_id = request.form.get('categoria_id') 
 
-        # Passa a nova categoria para a função de edição
         db.edit_dish(prato_id, nome, descricao, preco, categoria_id)
         db.update_dish_availability(prato_id, status)
         
+        # --- PARTE MODIFICADA ---
+        # Avisa todos que estão vendo o cardápio sobre a mudança de disponibilidade
+        update_data = {'prato_id': prato_id, 'status_disp': status}
+        socketio.emit('cardapio_atualizado', update_data, room=f'menu_restaurante_{id_restaurante}')
+        # --- FIM DA MODIFICAÇÃO ---
+
         flash('Prato atualizado com sucesso!', 'success')
         return redirect(url_for('restaurante_cardapio'))
 
-    # A lógica para GET (exibir o formulário) precisa de uma pequena mudança
     prato = db.get_dish_details(prato_id)
     if not prato:
         return "Prato não encontrado", 404
         
-    # Precisamos saber qual a categoria atual do prato
-    # A função get_dish_details precisa retornar o categoria_id
-    
-    id_restaurante = session['restaurante_id']
     categorias = db.get_restaurant_categories(id_restaurante)
     return render_template('restaurante_form_prato.html', prato=prato, categorias=categorias)
 
@@ -562,8 +574,53 @@ def atualizar_status_pedido(pedido_id):
         db.update_order_status(pedido_id, novo_status)
         flash(f'Status do pedido #{pedido_id} atualizado para "{novo_status}"!', 'success')
 
+        # --- PARTE MODIFICADA ---
+        # Avisa o cliente sobre a mudança de status
+        pedido_details = db.get_order_details(pedido_id)
+        if pedido_details and pedido_details.get('id_cliente'):
+            id_cliente = pedido_details['id_cliente']
+            dados_update = {'pedido_id': pedido_id, 'novo_status': novo_status}
+            # Emite o evento 'status_atualizado' para a sala privada do cliente
+            socketio.emit('status_atualizado', dados_update, room=f'cliente_{id_cliente}')
+        # --- FIM DA MODIFICAÇÃO ---
+            
     return redirect(url_for('painel_restaurante'))
+
+# --- LÓGICA DO WEBSOCKET ---
+
+@socketio.on('connect')
+def handle_connect():
+    """Executado quando um navegador se conecta. Coloca o usuário em sua sala privada."""
+    if 'user_id' not in session:
+        return
+
+    if session.get('is_restaurante'):
+        restaurante_id = session.get('restaurante_id')
+        if restaurante_id:
+            join_room(f'restaurante_{restaurante_id}')
+            print(f"Restaurante {restaurante_id} entrou na sua sala privada.")
+    else:
+        cliente_id = session.get('cliente_id')
+        if cliente_id:
+            join_room(f'cliente_{cliente_id}')
+            print(f"Cliente {cliente_id} entrou na sua sala privada.")
+
+@socketio.on('join_menu_room')
+def handle_join_menu_room(data):
+    """Executado quando um cliente abre a página de um cardápio."""
+    restaurante_id = data.get('restaurante_id')
+    if restaurante_id:
+        join_room(f'menu_restaurante_{restaurante_id}')
+        print(f"Um usuário entrou na sala do cardápio do restaurante {restaurante_id}.")
+
+@socketio.on('leave_menu_room')
+def handle_leave_menu_room(data):
+    """Executado quando um cliente sai da página de um cardápio."""
+    restaurante_id = data.get('restaurante_id')
+    if restaurante_id:
+        leave_room(f'menu_restaurante_{restaurante_id}')
+        print(f"Um usuário saiu da sala do cardápio do restaurante {restaurante_id}.")
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)

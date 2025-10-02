@@ -1,9 +1,3 @@
-Entendido\! Fiz os ajustes no `README.md` para simplificar a seção de configuração, focando no arquivo `my.cnf` e na instalação das dependências, e removi as instruções de injeção de SQL. Também atualizei a seção de autores.
-
-Aqui está a versão revisada:
-
------
-
 # Sistema de Delivery - Laboratório de Banco de Dados
 
 Este é o projeto da disciplina de Laboratório de Banco de Dados, que consiste em uma aplicação web completa para gestão de pedidos de delivery, conectando restaurantes e clientes de forma interativa e em tempo real.

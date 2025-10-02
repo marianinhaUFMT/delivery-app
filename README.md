@@ -5,9 +5,7 @@
 A plataforma simula um serviço de delivery de comida, permitindo que usuários se cadastrem como **clientes** ou **restaurantes**.
 
   * **Clientes** podem navegar pelos restaurantes disponíveis, visualizar seus cardápios, montar um carrinho, fazer pedidos e acompanhar o status da entrega.
-  * **Restaurantes** possuem um painel administrativo para gerenciar seus dados, cardápio, horários de funcionamento e, o mais importante, receber e atualizar o status dos pedidos em tempo real.
-
-A comunicação em tempo real é uma das funcionalidades centrais do projeto, implementada com WebSockets para garantir que as atualizações (novos pedidos, mudança de status, etc.) sejam refletidas instantaneamente na interface do usuário sem a necessidade de recarregar a página.
+  * **Restaurantes** possuem um painel administrativo para gerenciar seus dados, cardápio, horários de funcionamento, receber e atualizar o status dos pedidos em tempo real.
 
 -----
 

@@ -1,7 +1,8 @@
-DROP DATABASE IF EXISTS gerenciador_restaurantes;
 
-CREATE DATABASE gerenciador_restaurantes;
-USE gerenciador_restaurantes;
+
+DROP DATABASE IF EXISTS railway;
+CREATE DATABASE railway;
+USE railway;
 
 -- tabela usuario
 CREATE TABLE IF NOT EXISTS usuario (
@@ -155,6 +156,7 @@ CREATE TABLE IF NOT EXISTS produtos(
 );
 
 -- atualiza valor total automaticamente ao inserir item no pedido
+DELIMITER $$
 CREATE TRIGGER trg_valor_total
 AFTER INSERT ON item_pedido
 FOR EACH ROW
@@ -163,8 +165,11 @@ BEGIN
     SET valor_total = valor_total + (NEW.qtd * NEW.preco_item)
     WHERE id_pedido = NEW.id_pedido;
 END;
+$$
+DELIMITER ;
 
 -- funcao calcular nota media restaurante
+DELIMITER $$
 CREATE FUNCTION fn_media_avaliacao(rest_id INT)
 RETURNS DECIMAL(3,2)
 DETERMINISTIC
@@ -175,8 +180,11 @@ BEGIN
     WHERE id_restaurante = rest_id;
     RETURN IFNULL(media, 0);
 END;
+$$
+DELIMITER ;
 
 -- funcao calcular total pedidos restaurante
+DELIMITER $$
 CREATE FUNCTION fn_valor_pedido(pedido_id INT)
 RETURNS DECIMAL(10,2)
 DETERMINISTIC
@@ -187,8 +195,10 @@ BEGIN
     WHERE id_pedido = pedido_id;
     RETURN IFNULL(total, 0);
 END;
-
+$$
+DELIMITER ;
 -- criar pedido completo
+DELIMITER $$
 CREATE PROCEDURE sp_criar_pedido(
     IN p_cliente_id INT,
     IN p_restaurante_id INT
@@ -197,8 +207,11 @@ BEGIN
     INSERT INTO pedido (id_cliente, id_restaurante, valor_total)
     VALUES (p_cliente_id, p_restaurante_id, 0);
 END;
+$$
+DELIMITER ;
 
 -- alterar status pedido
+DELIMITER $$
 CREATE PROCEDURE sp_alterar_status(
     IN p_pedido_id INT,
     IN p_status ENUM('Pendente','Em Preparação','Em Trânsito','Entregue','Cancelado')
@@ -219,22 +232,19 @@ BEGIN
     INSERT INTO avaliacoes_restaurante(id_restaurante, id_cliente, nota, feedback)
     VALUES (p_restaurante_id, p_cliente_id, p_nota, p_feedback);
 END;
+$$
+DELIMITER ;
 
 # Alterações futuras: adicionar taxa de entrega e tempo estimado de entrega na tabela restaurante
+
 ALTER TABLE restaurante 
 ADD COLUMN taxa_entrega DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
 ADD COLUMN tempo_entrega_estimado VARCHAR(50);
 
---SELECT usuario_id, is_restaurante FROM usuario WHERE usuario = 'rest1';
-
--- Substitua '5' pelo ID que você encontrou
---SELECT * FROM restaurante WHERE usuario_id = 2;
-
 ALTER TABLE pedido
 ADD COLUMN foi_avaliado BOOLEAN NOT NULL DEFAULT FALSE;
 
--- 1. Adiciona a coluna para ligar a avaliação ao pedido
 ALTER TABLE avaliacoes_restaurante ADD COLUMN id_pedido INT NULL AFTER id_cliente;
 
--- 2. Faz a coluna de data e hora ser preenchida automaticamente
+
 ALTER TABLE avaliacoes_restaurante MODIFY COLUMN data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;

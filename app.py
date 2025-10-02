@@ -39,7 +39,6 @@ def login():
         if user_data:
             session['user_id'] = user_data['usuario_id']
             session['is_restaurante'] = user_data.get('is_restaurante', False)
-            flash('Login bem-sucedido!', 'success')
             
             if session['is_restaurante']:
                 if 'restaurante_id' in user_data and user_data['restaurante_id'] is not None:
@@ -65,7 +64,6 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    flash('Você foi desconectado.', 'info')
     return redirect(url_for('login'))
 
 @app.route("/pre_cadastro")
@@ -144,7 +142,15 @@ def painel_cliente():
     if 'user_id' not in session or session.get('is_restaurante'):
         flash('Faça login para continuar.', 'danger')
         return redirect(url_for('login'))
+        
+    # 1. Busca a lista original de restaurantes
     restaurantes = db.get_all_restaurants()
+    
+    # 2. Itera sobre cada restaurante para adicionar o status 'aberto'
+    for restaurante in restaurantes:
+        restaurante['aberto'] = db.is_restaurant_open(restaurante['id_restaurante'])
+        
+    # 3. Envia a lista MODIFICADA para o template
     return render_template('painel_cliente.html', restaurantes=restaurantes)
 
 @app.route('/meus_pedidos')
@@ -210,7 +216,13 @@ def restaurante_avaliacoes():
     
     id_restaurante = session['restaurante_id']
     avaliacoes = db.get_reviews_for_restaurant(id_restaurante)
-    return render_template('restaurante_avaliacoes.html', avaliacoes=avaliacoes)
+
+    restaurante_info = db.get_restaurant_details(id_restaurante)
+    media = restaurante_info['media_avaliacoes'] if restaurante_info else 0
+
+    return render_template('restaurante_avaliacoes.html', 
+                           avaliacoes=avaliacoes, 
+                           media_avaliacoes=media)
 
 @app.route('/meus_enderecos')
 def meus_enderecos():
@@ -254,16 +266,27 @@ def restaurante_horarios():
     
     if request.method == 'POST':
         horarios = {}
-        dias_semana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+        dias_semana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+        erro_validacao = False  # <-- 1. Adicionar uma flag de erro
+
         for dia in dias_semana:
-            # Verifica se o dia foi "ativado" pelo checkbox
             if f"ativo_{dia}" in request.form:
                 abertura = request.form.get(f"abertura_{dia}")
                 fechamento = request.form.get(f"fechamento_{dia}")
+
+                # --- 2. LÓGICA DE VALIDAÇÃO ADICIONADA ---
+                if not abertura or not fechamento:
+                    flash(f'Para o dia "{dia}", é necessário preencher os horários de abertura e fechamento.', 'danger')
+                    erro_validacao = True
+                # --- FIM DA VALIDAÇÃO ---
+
                 horarios[dia] = {'abertura': abertura, 'fechamento': fechamento}
             else:
-                 # Se o dia não está ativo, envia horários vazios para apagar do banco
                 horarios[dia] = {'abertura': None, 'fechamento': None}
+        
+        # 3. Se houver erro, interrompe o processo antes de ir para o banco
+        if erro_validacao:
+            return redirect(url_for('restaurante_horarios'))
         
         if db.update_schedule(id_restaurante, horarios):
             flash('Horários atualizados com sucesso!', 'success')
@@ -517,8 +540,13 @@ def painel_restaurante():
 
     id_restaurante = session['restaurante_id']
     pedidos = db.get_orders_for_restaurant(id_restaurante)
-    
-    return render_template('painel_restaurante.html', pedidos=pedidos, statuses=StatusPedido)
+
+    restaurante_info = db.get_restaurant_details(id_restaurante)
+
+    return render_template('painel_restaurante.html', 
+                           pedidos=pedidos, 
+                           statuses=StatusPedido, 
+                           restaurante_info=restaurante_info)
 
 @app.route("/painel_restaurante/cardapio")
 def restaurante_cardapio():

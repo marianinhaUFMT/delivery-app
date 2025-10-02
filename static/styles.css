@@ -1,5 +1,7 @@
 /* static/styles.css */
 
+/* static/styles.css */
+
 /* Definindo as cores e fontes principais para fácil manutenção */
 :root {
     --ifood-red: #EA1D2C;
@@ -8,8 +10,8 @@
     --background-light: #F7F7F7;
     --border-color: #E7E7E7;
     --white: #FFFFFF;
-    --green-success: #3c763d;
-    --red-danger: #a94442;
+    --green-success: #28a745; /* Ajustado para um verde mais vivo */
+    --red-danger: #dc3545;   /* Ajustado para um vermelho mais vivo */
 }
 
 /* Estilos Globais */
@@ -97,4 +99,244 @@ body {
 }
 .btn:hover {
     opacity: 0.9;
+}
+
+
+/* --- Lista de Restaurantes (Novo Design) --- */
+
+/* Remove a decoração do link que envolve o card */
+.restaurant-card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Novo grid para os cards */
+.restaurants-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 40px 25px; /* Aumenta o espaço vertical para o logo flutuante */
+    margin-top: 60px; /* Mais margem no topo para o logo */
+}
+
+/* Card principal */
+.restaurants-list .card {
+    background-color: var(--white);
+    border-radius: 20px; /* Bordas bem arredondadas */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    padding: 25px 20px; /* Adiciona um preenchimento geral */
+    position: relative;
+    transition: all 0.3s ease;
+    text-align: center; /* Centraliza todo o conteúdo do card */
+}
+
+.restaurants-list .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Logo agora dentro do card */
+.restaurant-logo {
+    margin-bottom: -20px;  /* Apenas para dar espaço para o conteúdo abaixo */
+    text-align: center;   /* Garante que a imagem dentro dele fique centralizada */
+}
+
+/* Agora estilizamos a imagem diretamente */
+.restaurant-logo img {
+    width: 250px;   /* Largura desejada para o selo */
+    height: 250px;  /* Altura desejada para o selo */
+    border-radius: 50%; /* Torna a imagem circular */
+    object-fit: cover;  /* Garante que a imagem preencha o círculo */
+    border: 5px solid var(--white); /* Borda branca ao redor da imagem */
+
+}
+
+
+/* Área de conteúdo abaixo do logo */
+.card-content {
+    padding: 15px 20px 20px 20px;
+    text-align: center;
+}
+
+/* Caixa cinza com nome e avaliação */
+.name-rating-box {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* Espaço entre os itens */
+    margin-bottom: 15px;
+}
+
+.restaurant-name {
+    font-weight: bold;
+    color: var(--text-dark);
+}
+
+.rating {
+    font-weight: bold;
+    color: var(--text-dark);
+}
+
+.rating .fa-star {
+    color: #f5c518; /* Cor da estrela */
+    font-size: 0.9em;
+}
+
+/* Estilo para a bolinha de status (aberto/fechado) */
+.status-dot {
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    flex-shrink: 0; /* Impede que a bolinha seja esmagada */
+}
+
+/* Cor para quando o restaurante estiver aberto */
+.status-dot.open {
+    background-color: #28a745; /* Verde */
+}
+
+/* Cor para quando o restaurante estiver fechado */
+.status-dot.closed {
+    background-color: #dc3545; /* Vermelho */
+}
+
+/* Ajuste para alinhar a bolinha e o nome */
+.name-rating-box {
+    display: flex;
+    align-items: center;
+}
+
+/* Tipo de culinária */
+.cuisine-type {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Divisor */
+.card-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 15px 0;
+}
+
+/* Detalhes de entrega (taxa e tempo) */
+.delivery-details {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.detail-item i {
+    color: var(--text-light); /* Cor dos ícones de taxa e tempo */
+}
+
+
+/* --- Estilos da página de cardápio --- */
+.restaurant-header {
+    background-color: #dadbdb; /* cinza claro */
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05); /* opcional: leve sombra */
+}
+.restaurant-header h1 {
+    margin: 0;
+    color: var(--text-dark);
+}
+.restaurant-header p {
+    margin: 5px 0;
+    color: var(--text-light);
+}
+.restaurant-header .rating {
+    margin-top: 10px;
+    font-weight: bold;
+    color: var(--text-dark);
+}
+
+.menu-list {
+    margin-top: 40px;
+}
+
+.category-title {
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* O card principal de cada prato */
+.menu-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.2s ease-in-out;
+}
+
+.menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Conteúdo de texto do card (nome, descrição, preço) */
+.menu-card-content {
+    flex-grow: 1; /* Faz esta área ocupar o máximo de espaço possível */
+}
+
+.menu-card-content h3 {
+    margin: 0 0 5px 0;
+    color: var(--text-dark);
+}
+
+.menu-card-content .description {
+    margin: 0 0 10px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.menu-card-content .price {
+    margin: 0;
+    font-weight: bold;
+    color: var(--text-dark);
+}
+
+/* Ação (botão) */
+.menu-card-action {
+    flex-shrink: 0; /* Impede que o botão seja esmagado */
+}
+
+/* Estilo específico para o botão "Adicionar" no menu */
+.btn.btn-add {
+    width: auto; /* Largura automática baseada no texto */
+    padding: 10px 25px; /* Mais preenchimento lateral */
+    font-size: 0.9rem;
+}
+
+/* (Opcional) Estilo para a imagem do prato */
+.menu-card-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover; /* Garante que a imagem não fique distorcida */
 }

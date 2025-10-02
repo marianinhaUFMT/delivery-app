@@ -7,22 +7,44 @@
     
     <div class="restaurants-list">
         {% for r in restaurantes %}
-            <a href="{{ url_for('menu_restaurante', restaurante_id=r.id_restaurante) }}" style="text-decoration: none;">
+            <a href="{{ url_for('menu_restaurante', restaurante_id=r.id_restaurante) }}" class="restaurant-card-link">
                 <div class="card">
-                    <div class="card-image">
-                        <img src="https://via.placeholder.com/150" alt="Logo do Restaurante">
+                    
+                    <div class="restaurant-logo">
+                        <img src="https://png.pngtree.com/png-clipart/20200709/original/pngtree-restaurant-logo-png-image_4009940.jpg" alt="Logo de {{ r.nome }}">
                     </div>
+                    
                     <div class="card-content">
-                        <h3>{{ r.nome }}</h3>
-                        <p>{{ r.tipo_culinaria }}</p>
-                        <p>Entrega: R$ {{ "%.2f"|format(r.taxa_entrega) }} &bull; {{ r.tempo_entrega_estimado }}</p>
-                        
-                        {% if r.aberto %}
-                            <p style="color: green; font-weight: bold;">Aberto</p>
-                        {% else %}
-                            <p style="color: red; font-weight: bold;">Fechado</p>
-                        {% endif %}
+                        <div class="name-rating-box">
+                            <div class="status-dot {% if r.aberto %}open{% else %}closed{% endif %}"></div>
+                            <span class="restaurant-name">{{ r.nome }}</span>
+                            
+                            {% if r.avaliacao %}
+                                <span class="rating">
+                                    ⭐ {{ "%.1f"|format(r.avaliacao) }}
+                                </span>
+                            {% endif %}
                         </div>
+
+                        <p class="cuisine-type">{{ r.tipo_culinaria }}</p>
+                        
+                        <hr class="card-divider">
+
+                        <div class="delivery-details">
+                            <div class="detail-item">
+                                💰
+                                <span>R$ {{ "%.2f"|format(r.taxa_entrega) }}</span>
+                            </div>
+
+                            {% if r.tempo_entrega_estimado and r.tempo_entrega_estimado != 'None' %}
+                                <div class="detail-item">
+                                    ⏰
+                                    <span>{{ r.tempo_entrega_estimado }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
                 </div>
             </a>
         {% else %}

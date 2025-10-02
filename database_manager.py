@@ -316,21 +316,23 @@ class DatabaseManager:
 
     # MODIFICADO: Aplicado o 'with' statement
     def get_all_restaurants(self):
-        """Busca todos os restaurantes e adiciona o status (aberto/fechado)."""
-        restaurantes = []
         try:
             with self.connection.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT id_restaurante, nome, tipo_culinaria, taxa_entrega, tempo_entrega_estimado FROM restaurante")
-                restaurantes_db = cursor.fetchall()
-            
-            # Para cada restaurante, verifica se está aberto
-            for r in restaurantes_db:
-                r['aberto'] = self.is_restaurant_open(r['id_restaurante'])
-                restaurantes.append(r)
-
-            return restaurantes
+                # Adicionamos a chamada para a função fn_media_avaliacao que você já criou no SQL
+                query = """
+                    SELECT 
+                        id_restaurante, 
+                        nome, 
+                        tipo_culinaria, 
+                        taxa_entrega, 
+                        tempo_entrega_estimado,
+                        fn_media_avaliacao(id_restaurante) AS media_avaliacoes
+                    FROM restaurante
+                """
+                cursor.execute(query)
+                return cursor.fetchall()
         except mysql.connector.Error as e:
-            print(f"Erro ao buscar todos os restaurantes: {e}")
+            print(f"Erro ao buscar restaurantes: {e}")
             return []
 
     # MODIFICADO: Aplicado o 'with' statement
@@ -556,12 +558,17 @@ class DatabaseManager:
             print(f"Erro ao alterar disponibilidade do prato: {e}")
             self.connection.rollback()
             return False
+        
     def get_restaurant_details(self, restaurante_id):
-        """Busca todos os detalhes de um restaurante, incluindo o endereço."""
+        """Busca todos os detalhes de um restaurante, incluindo o endereço E A MÉDIA DE AVALIAÇÕES."""
         try:
             with self.connection.cursor(dictionary=True) as cursor:
+                # Adicionamos a chamada para a função fn_media_avaliacao aqui também
                 query = """
-                    SELECT r.*, e.rua, e.num, e.bairro, e.cidade, e.estado, e.cep
+                    SELECT 
+                        r.*, 
+                        e.rua, e.num, e.bairro, e.cidade, e.estado, e.cep,
+                        fn_media_avaliacao(r.id_restaurante) AS media_avaliacoes
                     FROM restaurante AS r
                     JOIN enderecos_restaurante AS e ON r.id_end_rest = e.id_end_rest
                     WHERE r.id_restaurante = %s

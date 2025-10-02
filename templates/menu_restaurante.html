@@ -3,36 +3,39 @@
 {% block title %}{{ restaurante.nome }}{% endblock %}
 
 {% block content %}
-    <h1 style="text-align: center;">{{ restaurante.nome }}</h1>
-    <p style="text-align: center; color: var(--text-light);">{{ restaurante.tipo_culinaria }}</p>
+    <div class="container">
+        <div class="restaurant-header">
+            <h1>{{ restaurante.nome }}</h1>
+            <p>{{ restaurante.tipo_culinaria }}</p>
+            {% if restaurante.media_avaliacoes > 0 %}
+                <div class="rating">⭐ <strong>{{ "%.1f"|format(restaurante.media_avaliacoes) }}</strong></div>
+            {% else %}
+                <div class="rating"><span>Ainda não avaliado</span></div>
+            {% endif %}
+        </div>
 
-    <div class="menu-list">
-        {% for categoria, pratos in menu.items() %}
-            <h2>{{ categoria }}</h2>
-            {% for prato in pratos %}
-                <div class="card">
-                    <div class="card-content">
-                        <h3>{{ prato.nome_prato }}</h3>
-                        <p>{{ prato.descricao }}</p>
-                        <p style="font-weight: bold; color: var(--text-dark); margin-top: 10px;">R$ {{ "%.2f"|format(prato.preco) }}</p>
-                    </div>
-                    {% if not aberto %}
-                        <div class="alert alert-danger" role="alert" style="text-align: center;">
-                            <strong>Este restaurante está fechado no momento.</strong><br>
-                            Não é possível realizar pedidos agora.
+        <div class="menu-list">
+            {% for categoria, pratos in menu.items() %}
+                <h2 class="category-title">{{ categoria }}</h2>
+                
+                {% for prato in pratos %}
+                    <div class="menu-card">
+                        <div class="menu-card-content">
+                            <h3>{{ prato.nome_prato }}</h3>
+                            <p class="description">{{ prato.descricao }}</p>
+                            <p class="price">R$ {{ "%.2f"|format(prato.preco) }}</p>
                         </div>
-                    {% endif %}
-
-                    <form action="{{ url_for('adicionar_ao_carrinho') }}" method="post">
-                        <input type="hidden" name="prato_id" value="{{ prato.id_prato }}">
-                        <input type="hidden" name="restaurante_id" value="{{ restaurante.id_restaurante }}">
-                        <button type="submit" class="btn btn-sm btn-primary" 
-                                {% if not prato.status_disp or not aberto %}disabled{% endif %}>
-                            {% if not prato.status_disp %}Indisponível{% else %}Adicionar{% endif %}
-                        </button>
-                    </form>
-                </div>
+                        
+                        <div class="menu-card-action">
+                            <form action="{{ url_for('adicionar_ao_carrinho') }}" method="POST">
+                                <input type="hidden" name="prato_id" value="{{ prato.id_prato }}">
+                                <input type="hidden" name="restaurante_id" value="{{ restaurante.id_restaurante }}">
+                                <button type="submit" class="btn btn-add">Adicionar</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
+        </div>
     </div>
 {% endblock %}

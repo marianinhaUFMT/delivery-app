@@ -5,6 +5,15 @@
 <div class="form-wrapper" style="max-width: 960px;">
     {% include 'restaurante_nav.html' %}
     <h1>Avaliações Recebidas</h1>
+    {% if media_avaliacoes > 0 %}
+        <p style="text-align: center; margin-top: 5px; font-weight: bold;">
+            Média: ⭐ {{ "%.2f"|format(media_avaliacoes) }}
+        </p>
+    {% else %}
+        <p style="text-align: center; margin-top: 5px; color: #6c757d;">
+            Ainda não avaliado
+        </p>
+    {% endif %}
 
     <div class="reviews-list">
         {% for avaliacao in avaliacoes %}

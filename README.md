@@ -1,7 +1,5 @@
 # Sistema de Delivery - Laboratório de Banco de Dados
 
-Este é o projeto da disciplina de Laboratório de Banco de Dados, que consiste em uma aplicação web completa para gestão de pedidos de delivery, conectando restaurantes e clientes de forma interativa e em tempo real.
-
 ## Descrição do Projeto
 
 A plataforma simula um serviço de delivery de comida, permitindo que usuários se cadastrem como **clientes** ou **restaurantes**.
